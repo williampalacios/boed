@@ -4,5 +4,5 @@ pep8==1.7.1
 pycodestyle==2.5.0
 pytz==2018.5
 sqlparse==0.2.4
-PyMySQL==0.9.3
 django-allauth
+mysqlclient
