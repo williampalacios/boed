@@ -64,6 +64,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'williampalacios$boed',
+        'USER': 'williampalacios',
+        'PASSWORD': 'rootroot',
+        'HOST': 'williampalacios.mysql.pythonanywhere-services.com',
+}
+
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'BOED',
         'USER': 'root',
         'PASSWORD': 'root',
@@ -71,6 +81,7 @@ DATABASES = {
         'PORT': '3306',
     }
 }
+"""
 
 if ENVIRONMENT == 'production':
     DEBUG = False
