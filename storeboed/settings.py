@@ -68,8 +68,8 @@ DATABASES = {
         'USER': 'williampalacios',
         'PASSWORD': 'rootroot',
         'HOST': 'williampalacios.mysql.pythonanywhere-services.com',
+    }
 }
-
 """
 DATABASES = {
     'default': {
@@ -82,7 +82,6 @@ DATABASES = {
     }
 }
 """
-
 if ENVIRONMENT == 'production':
     DEBUG = False
     SECRET_KEY = os.getenv('SECRET_KEY')
