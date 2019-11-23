@@ -25,8 +25,8 @@ class ItemDetailView(DetailView):
     template_name = "product-page.html"
 
 
-def add_to_cart(request, slug):
-    item = get_object_or_404(Item, slug=slug)
+def add_to_cart(request, pk):
+    item = get_object_or_404(Item, id=pk)
     #buscar Order con usuario request.user y ordered=False (¿Existe la orden?).
     order_qs = Order.objects.filter(user=request.user, ordered=False)
     if order_qs.exists():
@@ -49,11 +49,11 @@ def add_to_cart(request, slug):
         oi = OrderItem(item=item, order=r, quantity=1)
         oi.save()
         messages.info(request, "This item was added to your cart.")
-    return redirect("core:product", slug=slug)
+    return redirect("core:product", pk=pk)
 
 
-def remove_from_cart(request, slug):
-    item = get_object_or_404(Item, slug=slug)
+def remove_from_cart(request, pk):
+    item = get_object_or_404(Item, id=pk)
     order_qs = Order.objects.filter(user=request.user, ordered=False)
     if order_qs.exists():
         order = order_qs[0]
@@ -78,7 +78,7 @@ def remove_from_cart(request, slug):
         order_item = OrderItem.objects.filter(order=order)
         if not order_item.exists():
             order.delete()
-    return redirect("core:product", slug=slug)
+    return redirect("core:product", pk=pk)
 
 
 """

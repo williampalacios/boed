@@ -15,20 +15,19 @@ class Item(models.Model):
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=1)
     label = models.CharField(choices=LABEL_CHOICES, max_length=1)
     image = models.CharField(max_length=250, null=True, blank=True)
-    slug = models.SlugField()
     description = models.TextField()
 
     def __str__(self):
         return self.title
 
     def get_absolute_url(self):
-        return reverse("core:product", kwargs={'slug': self.slug})
+        return reverse("core:product", args=[str(self.id)])
 
     def get_add_to_cart_url(self):
-        return reverse("core:add-to-cart", kwargs={'slug': self.slug})
+        return reverse("core:add-to-cart", args=[str(self.id)])
 
     def get_remove_from_cart_url(self):
-        return reverse("core:remove-from-cart", kwargs={'slug': self.slug})
+        return reverse("core:remove-from-cart", args=[str(self.id)])
 
 
 class Order(models.Model):
