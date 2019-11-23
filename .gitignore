@@ -10,3 +10,4 @@ __init__.py
 media_root
 static_root
 requirements.txt
+core/migrations
