@@ -1,11 +1,11 @@
 from django.shortcuts import render
-from django.views.generic import ListView, View
+from django.views.generic import ListView, View, DetailView
 from .models import Item
 
 
-def HomeView(request):
-    context = {'items': Item.objects.all()}
-    return render(request, "home-page.html", context)
+class HomeView(ListView):
+    model = Item
+    template_name = "home-page.html"
 
 
 def CheckoutView(request):
@@ -18,10 +18,14 @@ def ProductView(request):
     return render(request, "product-page.html", context)
 
 
+class ItemDetailView(DetailView):
+    model = Item
+    template_name = "product-page.html"
+
+
 """
 class HomeView(ListView):
     model = Item
-    paginated_by = 10
     template_name = "home-page.html"
 
 
