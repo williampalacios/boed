@@ -31,24 +31,25 @@ class Item(models.Model):
         return reverse("core:remove-from-cart", kwargs={'slug': self.slug})
 
 
-class OrderItem(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
-    ordered = models.BooleanField(default=False)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-
-    def __str__(self):
-        return str(self.quantity) + " of " + self.item.title
-
-
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
-    items = models.ManyToManyField(OrderItem)
+                             on_delete=models.PROTECT)
     start_date = models.DateTimeField(auto_now_add=True)
     ordered_date = models.DateTimeField()
     ordered = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username
+
+
+class OrderItem(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.PROTECT)
+    order = models.ForeignKey(Order, on_delete=models.PROTECT)
+    quantity = models.IntegerField(default=1)
+
+    def __str__(self):
+        return "Pedido de: " + str(
+            self.order.user) + ", producto: " + self.item.title
+
+    class Meta:
+        unique_together = (('item', 'order'))
