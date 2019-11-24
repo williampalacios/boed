@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block head_title %}Bicicletas Once{% endblock %}
+
+{% block content %}
+
+<!--Main layout-->
+<main>
+    <div class="container">
+
+        <div class="table-responsive text-nowrap">
+            <h2>Order Summary</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Item title</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Total Item Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for query_elmt in object %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ query_elmt.item.title }}</td>
+                        <td>{{ query_elmt.item.price }}</td>
+                        <td>
+                            <a href="{{ query_elmt.item.get_remove_from_cart_url_os }}">
+                                <i class="fas fa-minus mr-2"></i>
+                            </a>
+                            {{ query_elmt.quantity }}
+                            <a href="{{ query_elmt.item.get_add_to_cart_url_os }}">
+                                <i class="fas fa-plus ml-2"></i>
+                            </a>
+                        </td>
+                        <td>
+                            {% if query_elmt.item.discount_price %}
+                            ${{ query_elmt.get_total_discount_item_price }}
+                            <span class="badge badge-primary">Ahorro ${{ query_elmt.get_amount_saved }}</span>
+                            {% else %}
+                            ${{ query_elmt.get_total_item_price }}
+                            {% endif %}
+                            <a href="{{ query_elmt.item.get_delete_from_cart_url_os }}"><i
+                                    class="fas fa-trash-alt float-right"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="4"><b>Order Total</b></td>
+                        <td><b>${{ total }}</b></td>
+                    </tr>
+                    <tr>
+                        <td colspan="5">
+                            <a class="btn btn-warning float-right ml-2" href="/checkout/">Proceed to checkout</a>
+                            <a class="btn btn-primary float-right" href="/">Continue shopping</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</main>
+<!--Main layout-->
+{% endblock content %}

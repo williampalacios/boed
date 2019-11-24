@@ -29,6 +29,15 @@ class Item(models.Model):
     def get_remove_from_cart_url(self):
         return reverse("core:remove-from-cart", args=[str(self.id)])
 
+    def get_add_to_cart_url_os(self):
+        return reverse("core:add-to-cart-os", args=[str(self.id)])
+
+    def get_remove_from_cart_url_os(self):
+        return reverse("core:remove-from-cart-os", args=[str(self.id)])
+
+    def get_delete_from_cart_url_os(self):
+        return reverse("core:delete-from-cart-os", args=[str(self.id)])
+
 
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
@@ -49,6 +58,20 @@ class OrderItem(models.Model):
     def __str__(self):
         return "Pedido de: " + str(
             self.order.user) + ", producto: " + self.item.title
+
+    def get_total_item_price(self):
+        return self.quantity * self.item.price
+
+    def get_total_discount_item_price(self):
+        return self.quantity * self.item.discount_price
+
+    def get_amount_saved(self):
+        return self.item.price - self.item.discount_price
+
+    def get_total_final_price(self):
+        if self.item.discount_price:
+            return self.get_total_discount_item_price()
+        return self.get_total_item_price()
 
     class Meta:
         unique_together = (('item', 'order'))
