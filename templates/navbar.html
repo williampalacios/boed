@@ -37,9 +37,39 @@
                 </li>
                 {% endcomment %}
             </ul>
+            {% if request.user.is_authenticated %}
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link waves-effect">
+                        <span class="badge red z-depth-1 mr-1"> {{ request.user|cart_item_count }} </span>
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="clearfix d-none d-sm-inline-block"> Cart </span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link waves-effect" href="{% url 'account_logout' %}">
+                        <span class="clearfix d-none d-sm-inline-block"> Logout </span>
+                    </a>
+                </li>
+            </ul>
+            {% else %}
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link waves-effect" href="{% url 'account_login' %}">
+                        <span class="clearfix d-none d-sm-inline-block"> Login </span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link waves-effect" href="{% url 'account_signup' %}">
+                        <span class="clearfix d-none d-sm-inline-block"> Signup </span>
+                    </a>
+                </li>
+            </ul>
+            {% endif %}
 
             <!-- Right -->
-            <ul class="navbar-nav mr-auto">
+            {% comment %}
+            <ul class="navbar-nav nav-flex-icons">
                 {% if request.user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link waves-effect">
@@ -65,6 +95,7 @@
                     </a>
                 </li>
                 {% endif %}
+                {% endcomment %}
                 {% comment %}
                 <li class="nav-item">
                     <a href="https://www.facebook.com/mdbootstrap" class="nav-link waves-effect" target="_blank">
