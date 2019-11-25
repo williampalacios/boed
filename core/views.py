@@ -7,12 +7,40 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Item, Order, OrderItem, Address
 from .forms import CheckoutForm
+from django.core.paginator import Paginator
 
 
 class HomeView(ListView):
     model = Item
     paginate_by = 8
     template_name = "home-page.html"
+
+
+def HomeViewHerr(request):
+    qs_herr = Item.objects.filter(category='H')
+    paginator = Paginator(qs_herr, 8)
+
+    page = request.GET.get('page')
+    herrts = paginator.get_page(page)
+    return render(request, 'home-page-cather.html', {'herrts': herrts})
+
+
+def HomeViewBic(request):
+    qs_herr = Item.objects.filter(category='B')
+    paginator = Paginator(qs_herr, 8)
+
+    page = request.GET.get('page')
+    herrts = paginator.get_page(page)
+    return render(request, 'home-page-catbic.html', {'herrts': herrts})
+
+
+def HomeViewRef(request):
+    qs_herr = Item.objects.filter(category='R')
+    paginator = Paginator(qs_herr, 8)
+
+    page = request.GET.get('page')
+    herrts = paginator.get_page(page)
+    return render(request, 'home-page-catref.html', {'herrts': herrts})
 
 
 class OrderSummaryView(LoginRequiredMixin, View):
