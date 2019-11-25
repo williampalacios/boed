@@ -223,43 +223,22 @@
         <!--Section: Products v.3-->
 
         <!--Pagination-->
-        {% if is_paginated %}
         <nav class="d-flex justify-content-center wow fadeIn">
             <ul class="pagination pg-blue">
 
                 <!--Arrow left-->
-                {% if herr.has_previous %}
+                {% if herrts.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ herr.previous_page_number }}" aria-label="Previous">
+                    <a class="page-link" href="?page={{ herrts.previous_page_number }}" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                         <span class="sr-only">Previous</span>
                     </a>
                 </li>
                 {% endif %}
 
-                {% comment %}
-                <li class="page-item active">
-                    <a class="page-link" href="#">1
-                        <span class="sr-only">(current)</span>
-                    </a>
-                </li>
+                {% if herrts.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="#">2</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="#">3</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="#">4</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="#">5</a>
-                </li>
-                {% endcomment %}
-
-                {% if herr.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ herr.next_page_number }}" aria-label="Next">
+                    <a class="page-link" href="?page={{ herrts.next_page_number }}" aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                         <span class="sr-only">Next</span>
                     </a>
@@ -267,7 +246,6 @@
                 {% endif %}
             </ul>
         </nav>
-        {% endif %}
         <!--Pagination-->
 
     </div>
