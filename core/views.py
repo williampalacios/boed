@@ -41,44 +41,57 @@ class CheckoutView(View):
         return render(self.request, "checkout-page.html", context)
 
     def post(self, *args, **kwargs):
-        form = CheckoutForm(self.request.POST or None)
-        print(self.request.POST)
-        if form.is_valid():
-            shipping_address = form.cleaned_data.get('shipping_address')
-            shipping_address2 = form.cleaned_data.get('shipping_address2')
-            shipping_country = form.cleaned_data.get('shipping_country')
-            shipping_zip = form.cleaned_data.get('shipping_zip')
-            #same_billing_address = form.cleaned_data.get('same_billing_address')
-            #save_information = form.cleaned_data.get('save_information')
-            payment_option = form.cleaned_data.get('payment_option')
-            #buscamos la direccion asociada al usurio que envía la orden
-            address_qs = Address.objects.filter(user=self.request.user)
-            #si existe (solo habrá uno debido a la relación 1-1) lo actualizamos
-            if address_qs.exists():
-                address_qs.update(street_address=shipping_address,
-                                  apartment_address=shipping_address2,
-                                  country=shipping_country,
-                                  zip=shipping_zip)
-            else:  #en otro caso, lo creamos...
-                address = Address(user=self.request.user,
-                                  street_address=shipping_address,
-                                  apartment_address=shipping_address2,
-                                  country=shipping_country,
-                                  zip=shipping_zip)
-                address.save()
-            #buscar Order con usuario request.user y ordered=False (¿Existe la orden?).
-            order_qs = Order.objects.filter(user=self.request.user,
-                                            ordered=False)
-            #si existe, solo debe haber un registro en el qs con ordered=False
-            if order_qs.exists():
-                #actualizar el registro
-                order_qs.update(pay_method=payment_option, ordered=True)
-            #print(form.cleaned_data)
-            #print("the form is valid")
-            messages.info(self.request, "Tu pedido fue realizado con éxito.")
+
+        try:
+            qs = Order.objects.filter(user=self.request.user, ordered=False)
+            o = qs[0]  #aquí debe mandar la axcepción...
+
+            form = CheckoutForm(self.request.POST or None)
+            print(self.request.POST)
+            if form.is_valid():
+                shipping_address = form.cleaned_data.get('shipping_address')
+                shipping_address2 = form.cleaned_data.get('shipping_address2')
+                shipping_country = form.cleaned_data.get('shipping_country')
+                shipping_zip = form.cleaned_data.get('shipping_zip')
+                #same_billing_address = form.cleaned_data.get('same_billing_address')
+                #save_information = form.cleaned_data.get('save_information')
+                payment_option = form.cleaned_data.get('payment_option')
+                #buscamos la direccion asociada al usurio que envía la orden
+                address_qs = Address.objects.filter(user=self.request.user)
+                #si existe (solo habrá uno debido a la relación 1-1) lo actualizamos
+                if address_qs.exists():
+                    address_qs.update(street_address=shipping_address,
+                                      city=shipping_address2,
+                                      country=shipping_country,
+                                      zip=shipping_zip)
+                else:  #en otro caso, lo creamos...
+                    address = Address(user=self.request.user,
+                                      street_address=shipping_address,
+                                      city=shipping_address2,
+                                      country=shipping_country,
+                                      zip=shipping_zip)
+                    address.save()
+                #buscar Order con usuario request.user y ordered=False (¿Existe la orden?).
+                order_qs = Order.objects.filter(user=self.request.user,
+                                                ordered=False)
+                #si existe, solo debe haber un registro en el qs con ordered=False
+                if order_qs.exists():
+                    #actualizar el registro
+                    order_qs.update(pay_method=payment_option, ordered=True)
+                #print(form.cleaned_data)
+                #print("the form is valid")
+                messages.info(self.request,
+                              "Tu pedido fue realizado con éxito.")
+                return redirect('/')
+            messages.warning(self.request, "Failed checkout")
+            return redirect('core:checkout')
+
+        except:
+            messages.info(
+                self.request,
+                "imposible crear la orden... no tienes productos en tu carrito"
+            )
             return redirect('/')
-        messages.warning(self.request, "Failed checkout")
-        return redirect('core:checkout')
 
 
 """

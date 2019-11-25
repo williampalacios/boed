@@ -35,7 +35,7 @@ class CheckoutForm(forms.Form):
             'id': "zip",
             'class': "form-control"
         }),
-                                   required=False)
+                                   required=True)
     same_billing_address = forms.BooleanField(required=False)
     save_information = forms.BooleanField(required=False)
     payment_option = forms.ChoiceField(widget=forms.RadioSelect,

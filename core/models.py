@@ -85,10 +85,10 @@ class Address(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL,
                                 on_delete=models.CASCADE,
                                 primary_key=True)
-    street_address = models.CharField(max_length=100)
-    apartment_address = models.CharField(max_length=100)
-    country = CountryField(multiple=False)
-    zip = models.CharField(max_length=10)
+    street_address = models.CharField(max_length=100, null=False)
+    city = models.CharField(max_length=100, null=False)
+    country = CountryField(multiple=False, null=False)
+    zip = models.CharField(max_length=10, null=False)
 
     def __str__(self):
         return self.user.username
