@@ -5,7 +5,8 @@ from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Item, Order, OrderItem
+from .models import Item, Order, OrderItem, Address
+from .forms import CheckoutForm
 
 
 class HomeView(ListView):
@@ -28,13 +29,63 @@ class OrderSummaryView(LoginRequiredMixin, View):
             context = {'object': orderItem_qs, 'total': total}
             return render(self.request, 'order-summary.html', context)
         except:
-            messages.error(self.request, "no tienes orden activa")
+            messages.info(self.request, "no tienes orden activa")
             return redirect('/')
 
 
+class CheckoutView(View):
+    def get(self, *args, **kwargs):
+
+        form = CheckoutForm()
+        context = {'form': form}
+        return render(self.request, "checkout-page.html", context)
+
+    def post(self, *args, **kwargs):
+        form = CheckoutForm(self.request.POST or None)
+        print(self.request.POST)
+        if form.is_valid():
+            shipping_address = form.cleaned_data.get('shipping_address')
+            shipping_address2 = form.cleaned_data.get('shipping_address2')
+            shipping_country = form.cleaned_data.get('shipping_country')
+            shipping_zip = form.cleaned_data.get('shipping_zip')
+            #same_billing_address = form.cleaned_data.get('same_billing_address')
+            #save_information = form.cleaned_data.get('save_information')
+            payment_option = form.cleaned_data.get('payment_option')
+            #buscamos la direccion asociada al usurio que envía la orden
+            address_qs = Address.objects.filter(user=self.request.user)
+            #si existe (solo habrá uno debido a la relación 1-1) lo actualizamos
+            if address_qs.exists():
+                address_qs.update(street_address=shipping_address,
+                                  apartment_address=shipping_address2,
+                                  country=shipping_country,
+                                  zip=shipping_zip)
+            else:  #en otro caso, lo creamos...
+                address = Address(user=self.request.user,
+                                  street_address=shipping_address,
+                                  apartment_address=shipping_address2,
+                                  country=shipping_country,
+                                  zip=shipping_zip)
+                address.save()
+            #buscar Order con usuario request.user y ordered=False (¿Existe la orden?).
+            order_qs = Order.objects.filter(user=self.request.user,
+                                            ordered=False)
+            #si existe, solo debe haber un registro en el qs con ordered=False
+            if order_qs.exists():
+                #actualizar el registro
+                order_qs.update(pay_method=payment_option, ordered=True)
+            #print(form.cleaned_data)
+            #print("the form is valid")
+            messages.info(self.request, "Tu pedido fue realizado con éxito.")
+            return redirect('/')
+        messages.warning(self.request, "Failed checkout")
+        return redirect('core:checkout')
+
+
+"""
 def CheckoutView(request):
     context = {'items': Item.objects.all()}
     return render(request, "checkout-page.html", context)
+"""
 
 
 def ProductView(request):

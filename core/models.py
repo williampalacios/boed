@@ -1,11 +1,14 @@
 from django.db import models
 from django.conf import settings
 from django.shortcuts import reverse, redirect
+from django_countries.fields import CountryField
 
 CATEGORY_CHOICES = (('H', 'Herramientas'), ('R', 'Refacciones'),
                     ('B', 'Bicicletas'))
 
 LABEL_CHOICES = (('P', 'primary'), ('S', 'secondary'), ('D', 'danger'))
+
+PAY_CHOICES = (('E', 'Efectivo'), ('T', 'Transferencia'))
 
 
 class Item(models.Model):
@@ -45,9 +48,10 @@ class Order(models.Model):
     start_date = models.DateTimeField(auto_now_add=True)
     ordered_date = models.DateTimeField()
     ordered = models.BooleanField(default=False)
+    pay_method = models.CharField(choices=PAY_CHOICES, max_length=1, null=True)
 
     def __str__(self):
-        return self.user.username
+        return str(self.id)
 
 
 class OrderItem(models.Model):
@@ -56,8 +60,8 @@ class OrderItem(models.Model):
     quantity = models.IntegerField(default=1)
 
     def __str__(self):
-        return "Pedido de: " + str(
-            self.order.user) + ", producto: " + self.item.title
+        return "Pedido: " + str(
+            self.order.id) + ", producto: " + self.item.title
 
     def get_total_item_price(self):
         return self.quantity * self.item.price
@@ -66,7 +70,7 @@ class OrderItem(models.Model):
         return self.quantity * self.item.discount_price
 
     def get_amount_saved(self):
-        return self.item.price - self.item.discount_price
+        return (self.item.price - self.item.discount_price) * self.quantity
 
     def get_total_final_price(self):
         if self.item.discount_price:
@@ -75,3 +79,16 @@ class OrderItem(models.Model):
 
     class Meta:
         unique_together = (('item', 'order'))
+
+
+class Address(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL,
+                                on_delete=models.CASCADE,
+                                primary_key=True)
+    street_address = models.CharField(max_length=100)
+    apartment_address = models.CharField(max_length=100)
+    country = CountryField(multiple=False)
+    zip = models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.user.username
