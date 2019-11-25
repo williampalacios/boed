@@ -16,7 +16,7 @@ class Item(models.Model):
     price = models.FloatField()
     discount_price = models.FloatField(blank=True, null=True)
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=1)
-    label = models.CharField(choices=LABEL_CHOICES, max_length=1)
+    #label = models.CharField(choices=LABEL_CHOICES, max_length=1)
     image = models.CharField(max_length=250, null=True, blank=True)
     description = models.TextField()
 
