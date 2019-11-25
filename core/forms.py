@@ -23,10 +23,6 @@ class CheckoutForm(forms.Form):
         }),
                                         required=True)
     shipping_country = CountryField(blank_label='Seleccione País').formfield(
-        widget=CountrySelectWidget(attrs={
-            'class': "custom-select d-block w-100",
-            'id': "country"
-        }),
         required=True)
     shipping_zip = forms.CharField(widget=forms.TextInput(
         attrs={
