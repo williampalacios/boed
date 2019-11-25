@@ -51,7 +51,9 @@ class Order(models.Model):
     pay_method = models.CharField(choices=PAY_CHOICES, max_length=1, null=True)
 
     def __str__(self):
-        return str(self.id)
+        return "pedido " + str(
+            self.id) + " de " + self.user.first_name + " ¿Ordenado?: " + str(
+                self.ordered)
 
 
 class OrderItem(models.Model):

@@ -8,7 +8,7 @@ PAY_CHOICES = (('E', 'Efectivo'), ('T', 'Transferencia'))
 class CheckoutForm(forms.Form):
     shipping_address = forms.CharField(widget=forms.TextInput(
         attrs={
-            'placeholder': '1234 Main St',
+            'placeholder': 'Calle sin nómbre, 109',
             'type': "text",
             'id': "address",
             'class': "form-control"
@@ -16,13 +16,13 @@ class CheckoutForm(forms.Form):
                                        required=True)
     shipping_address2 = forms.CharField(widget=forms.TextInput(
         attrs={
-            'placeholder': 'Interior',
+            'placeholder': 'CDMX',
             'type': "text",
             'id': "address-2",
             'class': "form-control"
         }),
                                         required=True)
-    shipping_country = CountryField(blank_label='(select country)').formfield(
+    shipping_country = CountryField(blank_label='Seleccione País').formfield(
         widget=CountrySelectWidget(attrs={
             'class': "custom-select d-block w-100",
             'id': "country"
@@ -30,7 +30,7 @@ class CheckoutForm(forms.Form):
         required=True)
     shipping_zip = forms.CharField(widget=forms.TextInput(
         attrs={
-            'placeholder': 'Zip',
+            'placeholder': '09310',
             'type': "text",
             'id': "zip",
             'class': "form-control"
@@ -44,8 +44,12 @@ class CheckoutForm(forms.Form):
 
 
 class SignupForm(forms.Form):
-    first_name = forms.CharField(max_length=30, label='Nombre(s)')
-    last_name = forms.CharField(max_length=30, label='Apellido(s)')
+    first_name = forms.CharField(max_length=30,
+                                 label='Nombre(s)',
+                                 required=True)
+    last_name = forms.CharField(max_length=30,
+                                label='Apellido(s)',
+                                required=True)
 
     def signup(self, request, user):
         user.first_name = self.cleaned_data['first_name']

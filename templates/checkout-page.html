@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+
+{% block head_title %}Bicicletas Once / Envio y Pago{% endblock %}
+
 {% block content %}
 {% load crispy_forms_tags %}
 
@@ -8,7 +11,7 @@
     <div class="container wow fadeIn">
 
       <!-- Heading -->
-      <h2 class="my-5 h2 text-center">Checkout form</h2>
+      <h2 class="my-5 h2 text-left">Detalles de Pedido:</h2>
 
       <!--Grid row-->
       <div class="row">
@@ -36,13 +39,13 @@
               <!--address-->
               <div class="md-form mb-5">
                 {{ form.shipping_address }}
-                <label for="address" class="">Address</label>
+                <label for="address" class="">Calle y Número</label>
               </div>
 
               <!--address-2-->
               <div class="md-form mb-5">
                 {{ form.shipping_address2 }}
-                <label for="address-2" class="">Address 2 (optional)</label>
+                <label for="address-2" class="">Ciudad</label>
               </div>
 
               <div>
@@ -52,9 +55,7 @@
 
               <div class="md-form mb-5">
                 {{ form.shipping_zip }}
-                <div class="invalid-feedback">
-                  Zip code required.
-                </div>
+                <label for="zip" class="">Código Postal</label>
               </div>
               {% comment %}
               <!--Grid row-->
@@ -137,7 +138,7 @@
               </div>
               {% endcomment %}
               <hr class="mb-4">
-              <button class="btn btn-primary btn-lg btn-block" type="submit">Continue to checkout</button>
+              <button class="btn btn-primary btn-lg btn-block" type="submit">Enviar Pedido</button>
 
             </form>
 
@@ -146,7 +147,7 @@
 
         </div>
         <!--Grid column-->
-
+        {% comment %}
         <!--Grid column-->
         <div class="col-md-4 mb-4">
 
@@ -207,7 +208,7 @@
 
         </div>
         <!--Grid column-->
-
+        {% endcomment %}
       </div>
       <!--Grid row-->
 

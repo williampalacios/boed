@@ -57,7 +57,7 @@ class OrderSummaryView(LoginRequiredMixin, View):
             context = {'object': orderItem_qs, 'total': total}
             return render(self.request, 'order-summary.html', context)
         except:
-            messages.info(self.request, "no tienes orden activa")
+            messages.info(self.request, "Tu carrito está vacio")
             return redirect('/')
 
 
@@ -152,18 +152,19 @@ def add_to_cart(request, pk):
             order_item_inst = order_item[0]
             order_item_inst.quantity += 1
             order_item_inst.save()
-            messages.info(request, "This item quantity was updated.")
+            messages.info(request,
+                          "La cantidad de productos ha sido actualizada.")
         else:
             q = OrderItem(item=item, order=order, quantity=1)
             q.save()
-            messages.info(request, "This item was added to your cart.")
+            messages.info(request, "El producto se agregó a tu carrito.")
     else:
         ordered_date = timezone.now()
         r = Order(user=request.user, ordered_date=ordered_date, ordered=False)
         r.save()
         oi = OrderItem(item=item, order=r, quantity=1)
         oi.save()
-        messages.info(request, "This item was added to your cart.")
+        messages.info(request, "El producto se agregó a tu carrito.")
     return redirect("core:product", pk=pk)
 
 
@@ -181,13 +182,14 @@ def remove_from_cart(request, pk):
             order_item_inst.save()
             if order_item_inst.quantity == 0:
                 order_item_inst.delete()
-            messages.info(request, "This item was removed from your cart.")
+            messages.info(request,
+                          "La cantidad de productos ha sido actualizada.")
             #return redirect("core:product", slug=slug)
         else:
-            messages.info(request, "This item was not in your cart")
+            messages.info(request, "Este producto no estaba en tu carrito.")
             #return redirect("core:product", slug=slug)
     else:
-        messages.info(request, "You do not have an active order")
+        messages.info(request, "Tu carrito está vacio.")
         #return redirect("core:product", slug=slug)
     if order_qs.exists():
         order = order_qs[0]
@@ -210,18 +212,19 @@ def add_to_cart_os(request, pk):
             order_item_inst = order_item[0]
             order_item_inst.quantity += 1
             order_item_inst.save()
-            messages.info(request, "This item quantity was updated.")
+            messages.info(request,
+                          "La cantidad de productos ha sido actualizada.")
         else:
             q = OrderItem(item=item, order=order, quantity=1)
             q.save()
-            messages.info(request, "This item was added to your cart.")
+            messages.info(request, "El producto se agregó a tu carrito.")
     else:
         ordered_date = timezone.now()
         r = Order(user=request.user, ordered_date=ordered_date, ordered=False)
         r.save()
         oi = OrderItem(item=item, order=r, quantity=1)
         oi.save()
-        messages.info(request, "This item was added to your cart.")
+        messages.info(request, "El producto se agregó a tu carrito.")
     return redirect("core:order-summary")
 
 
@@ -239,13 +242,14 @@ def remove_from_cart_os(request, pk):
             order_item_inst.save()
             if order_item_inst.quantity == 0:
                 order_item_inst.delete()
-            messages.info(request, "This item was removed from your cart.")
+            messages.info(request,
+                          "La cantidad de productos ha sido actualizada.")
             #return redirect("core:product", slug=slug)
         else:
-            messages.info(request, "This item was not in your cart")
+            messages.info(request, "Este producto no estaba en tu carrito.")
             #return redirect("core:product", slug=slug)
     else:
-        messages.info(request, "You do not have an active order")
+        messages.info(request, "Tu carrito está vacio.")
         #return redirect("core:product", slug=slug)
     if order_qs.exists():
         order = order_qs[0]
@@ -266,13 +270,14 @@ def delete_from_cart_os(request, pk):
         if order_item.exists():
             order_item_inst = order_item[0]
             order_item_inst.delete()
-            messages.info(request, "This item was removed from your cart.")
+            messages.info(request,
+                          "La cantidad de productos ha sido actualizada.")
             #return redirect("core:product", slug=slug)
         else:
-            messages.info(request, "This item was not in your cart")
+            messages.info(request, "Este producto no estaba en tu carrito.")
             #return redirect("core:product", slug=slug)
     else:
-        messages.info(request, "You do not have an active order")
+        messages.info(request, "Tu carrito está vacio.")
         #return redirect("core:product", slug=slug)
     if order_qs.exists():
         order = order_qs[0]
