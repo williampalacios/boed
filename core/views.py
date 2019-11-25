@@ -11,7 +11,7 @@ from .forms import CheckoutForm
 
 class HomeView(ListView):
     model = Item
-    paginate_by = 10
+    paginate_by = 6
     template_name = "home-page.html"
 
 
