@@ -25,7 +25,11 @@
                     <tr>
                         <td>{{ forloop.counter }}</td>
                         <td>{{ query_elmt.item.title }}</td>
+                        {% if query_elmt.item.discount_price %}
                         <td>{{ query_elmt.item.discount_price }}</td>
+                        {% else %}
+                        <td>{{ query_elmt.item.price }}</td>
+                        {% endif %}
                         <td>
                             <a href="{{ query_elmt.item.get_remove_from_cart_url_os }}">
                                 <i class="fas fa-minus mr-2"></i>
