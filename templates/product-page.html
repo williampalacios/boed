@@ -60,24 +60,38 @@
               <p>
                 <a href="{{ object.get_add_to_cart_url }}" class="btn btn-primary btn-md my-0 p">
                   Añadir al carrito
-                  <i class="fas fa-shopping-cart ml-1"></i>
                 </a>
               </p>
 
               <p>
-                <a href="{{ object.get_remove_from_cart_url }}" class="btn btn-danger btn-md my-0 p">
+                <a href="{{ object.get_remove_from_cart_url }}" class="btn btn-purple btn-md my-0 p">
                   Quitar del carrito
-                  <i class="fas fa-shopping-cart ml-1"></i>
                 </a>
               </p>
             </div>
 
             <div class="row wow fadeIn">
+              {% if object.get_absolute_url not in referer %}
               <p>
                 <a href="{{ referer }}" class="btn btn-warning btn-md my-0 p">
                   Continuar comprando
                 </a>
               </p>
+              {% else %}
+              <p>
+                <a href="/" class="btn btn-warning btn-md my-0 p">
+                  Continuar comprando
+                </a>
+              </p>
+              {% endif %}
+              {% if request.user.is_authenticated %}
+              <p>
+                <a href="{% url 'core:order-summary' %}" class="btn btn-danger btn-md my-0 p">
+                  Ver carrito
+                  <i class="fas fa-shopping-cart ml-1"></i>
+                </a>
+              </p>
+              {% endif %}
             </div>
 
           </div>

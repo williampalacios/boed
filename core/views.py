@@ -122,32 +122,15 @@ class CheckoutView(View):
             return redirect('/')
 
 
-"""
-def CheckoutView(request):
-    context = {'items': Item.objects.all()}
-    return render(request, "checkout-page.html", context)
-
-
-
-def ProductView(request):
-    context = {'items': Item.objects.all()}
-    return render(request, "product-page.html", context)
-
-
-
-class ItemDetailView(DetailView):
-    model = Item
-    template_name = "product-page.html"
-"""
-
-
 class ItemDetailView(DetailView):
     model = Item
     template_name = "product-page.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['referer'] = self.request.META.get('HTTP_REFERER')
+        referer = self.request.META.get('HTTP_REFERER')
+        context['referer'] = referer
+        context['request'] = self.request
         return context
 
 
@@ -300,6 +283,23 @@ def delete_from_cart_os(request, pk):
 
 
 """
+def CheckoutView(request):
+    context = {'items': Item.objects.all()}
+    return render(request, "checkout-page.html", context)
+
+
+
+def ProductView(request):
+    context = {'items': Item.objects.all()}
+    return render(request, "product-page.html", context)
+
+
+
+class ItemDetailView(DetailView):
+    model = Item
+    template_name = "product-page.html"
+
+
 class HomeView(ListView):
     model = Item
     template_name = "home-page.html"
