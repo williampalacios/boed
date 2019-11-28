@@ -126,7 +126,7 @@ class CheckoutView(View):
 def CheckoutView(request):
     context = {'items': Item.objects.all()}
     return render(request, "checkout-page.html", context)
-"""
+
 
 
 def ProductView(request):
@@ -134,9 +134,21 @@ def ProductView(request):
     return render(request, "product-page.html", context)
 
 
+
 class ItemDetailView(DetailView):
     model = Item
     template_name = "product-page.html"
+"""
+
+
+class ItemDetailView(DetailView):
+    model = Item
+    template_name = "product-page.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['referer'] = self.request.META.get('HTTP_REFERER')
+        return context
 
 
 @login_required
