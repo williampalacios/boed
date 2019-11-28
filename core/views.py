@@ -45,8 +45,9 @@ def HomeViewRef(request):
 
 class OrderSummaryView(LoginRequiredMixin, View):
     def get(self, *args, **kwargs):
-        try:
-            qs = Order.objects.filter(user=self.request.user, ordered=False)
+
+        qs = Order.objects.filter(user=self.request.user, ordered=False)
+        if len(qs) != 0:
             o = qs[0]
             orderItem_qs = OrderItem.objects.filter(order=o)
 
@@ -56,9 +57,9 @@ class OrderSummaryView(LoginRequiredMixin, View):
 
             context = {'object': orderItem_qs, 'total': total}
             return render(self.request, 'order-summary.html', context)
-        except:
+        else:
             messages.info(self.request, "Tu carrito está vacio")
-            return redirect('/')
+            return redirect(self.request.META.get('HTTP_REFERER'))
 
 
 class CheckoutView(View):
@@ -282,6 +283,24 @@ def delete_from_cart_os(request, pk):
     return redirect("core:order-summary")
 
 
+"""
+class OrderSummaryView(LoginRequiredMixin, View):
+    def get(self, *args, **kwargs):
+        try:
+            qs = Order.objects.filter(user=self.request.user, ordered=False)
+            o = qs[0]
+            orderItem_qs = OrderItem.objects.filter(order=o)
+
+            total = 0
+            for E in orderItem_qs:
+                total = total + E.get_total_final_price()
+
+            context = {'object': orderItem_qs, 'total': total}
+            return render(self.request, 'order-summary.html', context)
+        except:
+            messages.info(self.request, "Tu carrito está vacio")
+            return redirect('/')
+"""
 """
 def CheckoutView(request):
     context = {'items': Item.objects.all()}
