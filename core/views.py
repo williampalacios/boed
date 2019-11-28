@@ -45,9 +45,8 @@ def HomeViewRef(request):
 
 class OrderSummaryView(LoginRequiredMixin, View):
     def get(self, *args, **kwargs):
-
-        qs = Order.objects.filter(user=self.request.user, ordered=False)
-        if len(qs) != 0:
+        try:
+            qs = Order.objects.filter(user=self.request.user, ordered=False)
             o = qs[0]
             orderItem_qs = OrderItem.objects.filter(order=o)
 
@@ -57,9 +56,9 @@ class OrderSummaryView(LoginRequiredMixin, View):
 
             context = {'object': orderItem_qs, 'total': total}
             return render(self.request, 'order-summary.html', context)
-        else:
+        except:
             messages.info(self.request, "Tu carrito está vacio")
-            return redirect(self.request.META.get('HTTP_REFERER'))
+            return redirect('/')
 
 
 class CheckoutView(View):
@@ -130,8 +129,11 @@ class ItemDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         referer = self.request.META.get('HTTP_REFERER')
+        order_qs = Order.objects.filter(user=self.request.user, ordered=False)
+
         context['referer'] = referer
         context['request'] = self.request
+        context['order_qs'] = order_qs
         return context
 
 
@@ -283,24 +285,6 @@ def delete_from_cart_os(request, pk):
     return redirect("core:order-summary")
 
 
-"""
-class OrderSummaryView(LoginRequiredMixin, View):
-    def get(self, *args, **kwargs):
-        try:
-            qs = Order.objects.filter(user=self.request.user, ordered=False)
-            o = qs[0]
-            orderItem_qs = OrderItem.objects.filter(order=o)
-
-            total = 0
-            for E in orderItem_qs:
-                total = total + E.get_total_final_price()
-
-            context = {'object': orderItem_qs, 'total': total}
-            return render(self.request, 'order-summary.html', context)
-        except:
-            messages.info(self.request, "Tu carrito está vacio")
-            return redirect('/')
-"""
 """
 def CheckoutView(request):
     context = {'items': Item.objects.all()}

@@ -84,7 +84,7 @@
                 </a>
               </p>
               {% endif %}
-              {% if request.user.is_authenticated %}
+              {% if request.user.is_authenticated and order_qs%}
               <p>
                 <a href="{% url 'core:order-summary' %}" class="btn btn-danger btn-md my-0 p">
                   Ver carrito
