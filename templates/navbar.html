@@ -36,12 +36,7 @@
                     </a>
                 </li>
                 {% endcomment %}
-            </ul>
-
-            <!-- Right -->
-
-            {% if request.user.is_authenticated %}
-            <ul class="navbar-nav mr-auto">
+                {% if request.user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link waves-effect " href="{% url 'core:order-summary' %}">
                         <span class="badge red z-depth-1 mr-1"> {{ request.user|cart_item_count }} </span>
@@ -49,6 +44,13 @@
                         <span class="sr-only">(current)</span>
                     </a>
                 </li>
+                {% endif %}
+            </ul>
+
+            <!-- Right -->
+
+            {% if request.user.is_authenticated %}
+            <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                     <a class="nav-link waves-effect" href="{% url 'account_logout' %}">Cerrar Sesión
                         <span class="sr-only">(current)</span>
