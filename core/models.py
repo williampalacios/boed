@@ -8,7 +8,8 @@ CATEGORY_CHOICES = (('H', 'Herramientas'), ('R', 'Refacciones'),
 
 LABEL_CHOICES = (('P', 'primary'), ('S', 'secondary'), ('D', 'danger'))
 
-PAY_CHOICES = (('E', 'Efectivo'), ('T', 'Transferencia'))
+PAY_CHOICES = (('E', 'Efectivo'), ('T', 'Transferencia'), ('V',
+                                                           'VISA/MASTERCARD'))
 
 
 class Item(models.Model):
@@ -41,19 +42,30 @@ class Item(models.Model):
     def get_delete_from_cart_url_os(self):
         return reverse("core:delete-from-cart-os", args=[str(self.id)])
 
+    def get_final_price(self):
+        if self.discount_price:
+            return self.discount_price
+        return self.price
+
 
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.PROTECT)
     start_date = models.DateTimeField(auto_now_add=True)
-    ordered_date = models.DateTimeField()
+    ordered_date = models.DateTimeField(null=True)
     ordered = models.BooleanField(default=False)
+    paid = models.BooleanField(default=False)
+    sent = models.BooleanField(default=False)
     pay_method = models.CharField(choices=PAY_CHOICES, max_length=1, null=True)
+    total = models.FloatField(default=0)
 
     def __str__(self):
         return "pedido " + str(
             self.id) + " de " + self.user.first_name + " ¿Ordenado?: " + str(
                 self.ordered)
+
+    def get_absolute_url(self):
+        return reverse("core:order-detail", args=[str(self.id)])
 
 
 class OrderItem(models.Model):
@@ -93,4 +105,5 @@ class Address(models.Model):
     zip = models.CharField(max_length=10, null=False)
 
     def __str__(self):
-        return self.user.username
+        return self.street_address + "; " + self.city + "; " + str(
+            self.country) + "; " + self.zip

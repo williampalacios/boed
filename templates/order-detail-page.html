@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block head_title %}Bicicletas Once / Detalle del pedido{% endblock %}
+{% block content %}
+
+<body class="grey lighten-3">
+    <!--Main layout-->
+    <main>
+
+        <!-- Card -->
+        <div class="container wow fadeIn">
+            <div class="card testimonial-card">
+
+                <!-- Background color -->
+                <div class=" card-up indigo lighten-1"></div>
+
+                <!-- Content -->
+                <div class="card-body">
+                    <!-- Name -->
+                    <h4 class="card-title">Detalles de Pago</h4>
+                    <hr>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col">Total:</div>
+                            <div class="col">{{ order.total }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Método de pago:</div>
+                            <div class="col">{{ order.get_pay_method_display }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Nombre:</div>
+                            <div class="col">{{ name }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Dirección de facturación:</div>
+                            <div class="col">{{ address }}</div>
+                        </div>
+                    </div>
+                    <hr class="mb-4">
+                    {% if order.pay_method == 'V' %}
+                    <form action="{% url 'core:charge' %}" method="POST">
+                        {% csrf_token %}
+                        <script src="https://checkout.stripe.com/checkout.js" class="stripe-button" data-key="{{ key }}"
+                            data-description="Cargo de la Compra" data-amount="{{ total }}" data-locale="auto"
+                            data-currency=mxn>
+                            </script>
+                        <script>
+                            // Hide default stripe button, be careful there if you
+                            // have more than 1 button of that class
+                            document.getElementsByClassName("stripe-button-el")[0].style.display = 'none';
+                        </script>
+                        <button type="submit" class="btn btn-primary btn-lg btn-block">Proceder al pago</button>
+                    </form>
+                    {% else %}
+                    {% if order.pay_method != None %}
+                    <button class="btn btn-primary btn-lg btn-block">Terminar la compra</button>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Card -->
+
+        </div>
+    </main>
+</body>
+{% endblock content %}

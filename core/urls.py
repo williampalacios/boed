@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HomeView, CheckoutView, ItemDetailView, add_to_cart, remove_from_cart, OrderSummaryView, add_to_cart_os, remove_from_cart_os, delete_from_cart_os, HomeViewHerr, HomeViewBic, HomeViewRef
+from .views import HomeView, CheckoutView, ItemDetailView, add_to_cart, remove_from_cart, OrderSummaryView, add_to_cart_os, remove_from_cart_os, delete_from_cart_os, HomeViewHerr, HomeViewBic, HomeViewRef, OrderDetailView, charge
 
 app_name = 'core'
 
@@ -12,6 +12,7 @@ urlpatterns = [
     path('checkout/', CheckoutView.as_view(), name='checkout'),
     path('order-summary/', OrderSummaryView.as_view(), name='order-summary'),
     path('product/<pk>/', ItemDetailView.as_view(), name='product'),
+    path('order-detail/', OrderDetailView.as_view(), name='order-detail'),
     path('add-to-cart/<pk>/', add_to_cart, name='add-to-cart'),
     path('remove-from-cart/<pk>', remove_from_cart, name='remove-from-cart'),
     path('add-to-cart-os/<pk>/', add_to_cart_os, name='add-to-cart-os'),
@@ -20,7 +21,8 @@ urlpatterns = [
          name='remove-from-cart-os'),
     path('delete-from-cart-os/<pk>',
          delete_from_cart_os,
-         name='delete-from-cart-os')
+         name='delete-from-cart-os'),
+    path('charge/', charge, name='charge')  # new
 ]
 """
 urlpatterns = [

@@ -8,6 +8,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Item, Order, OrderItem, Address
 from .forms import CheckoutForm
 from django.core.paginator import Paginator
+from django.conf import settings
+import stripe
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 class HomeView(ListView):
@@ -61,6 +65,43 @@ class OrderSummaryView(LoginRequiredMixin, View):
             return redirect('/')
 
 
+class OrderDetailView(LoginRequiredMixin, View):
+    def get(self, *args, **kwargs):
+        try:
+            qs = Order.objects.filter(user=self.request.user, ordered=False)
+            o = qs[0]
+            name = self.request.user.first_name + " " + self.request.user.last_name
+            address_qs = Address.objects.filter(user=self.request.user)
+            a = address_qs[0]
+            total = o.total * 100
+            key = settings.STRIPE_PUBLISHABLE_KEY
+            context = {
+                'order': o,
+                'name': name,
+                'address': a,
+                'total': total,
+                'key': key
+            }
+            return render(self.request, 'order-detail-page.html', context)
+        except:
+            messages.info(self.request, "No tienes pedidos activos")
+            return redirect('/')
+
+
+def charge(request):
+    qs = Order.objects.filter(user=request.user, ordered=False)
+    o = qs[0]
+    amount = round(o.total) * 100
+    if request.method == 'POST':
+        charge = stripe.Charge.create(amount=amount,
+                                      currency='mxn',
+                                      description='pago con stripe',
+                                      source=request.POST['stripeToken'])
+        messages.info(request, "Pago exitoso")
+        qs.update(ordered=True, ordered_date=timezone.now(), paid=True)
+        return render(request, 'charge.html')
+
+
 class CheckoutView(View):
     def get(self, *args, **kwargs):
 
@@ -105,12 +146,14 @@ class CheckoutView(View):
                 #si existe, solo debe haber un registro en el qs con ordered=False
                 if order_qs.exists():
                     #actualizar el registro
-                    order_qs.update(pay_method=payment_option, ordered=True)
+                    order_qs.update(
+                        pay_method=payment_option
+                    )  #, ordered=True, ordered_date=timezone.now())
                 #print(form.cleaned_data)
                 #print("the form is valid")
-                messages.info(self.request,
-                              "Tu pedido fue realizado con éxito.")
-                return redirect('/')
+                #messages.info(self.request, "Tu pedido fue realizado con éxito.")
+
+                return redirect('core:order-detail')
             messages.warning(self.request, "Failed checkout")
             return redirect('core:checkout')
 
@@ -162,11 +205,20 @@ def add_to_cart(request, pk):
             messages.info(request, "El producto se agregó a tu carrito.")
     else:
         ordered_date = timezone.now()
-        r = Order(user=request.user, ordered_date=ordered_date, ordered=False)
+        r = Order(user=request.user, ordered=False)
         r.save()
         oi = OrderItem(item=item, order=r, quantity=1)
         oi.save()
         messages.info(request, "El producto se agregó a tu carrito.")
+
+    #actualizar total de la orden:
+    #garantizamos que ya existe la orden... entonces:
+    order_qs = Order.objects.filter(user=request.user, ordered=False)
+    order = order_qs[0]
+    total_act = order.total
+    total_aft = total_act + item.get_final_price()
+    order_qs.update(total=total_aft)
+
     return redirect("core:product", pk=pk)
 
 
@@ -174,6 +226,7 @@ def add_to_cart(request, pk):
 def remove_from_cart(request, pk):
     item = get_object_or_404(Item, id=pk)
     order_qs = Order.objects.filter(user=request.user, ordered=False)
+    was_there = False
     if order_qs.exists():
         order = order_qs[0]
         order_item = OrderItem.objects.filter(item=item, order=order)
@@ -186,6 +239,7 @@ def remove_from_cart(request, pk):
                 order_item_inst.delete()
             messages.info(request,
                           "La cantidad de productos ha sido actualizada.")
+            was_there = True
             #return redirect("core:product", slug=slug)
         else:
             messages.info(request, "Este producto no estaba en tu carrito.")
@@ -198,6 +252,16 @@ def remove_from_cart(request, pk):
         order_item = OrderItem.objects.filter(order=order)
         if not order_item.exists():
             order.delete()
+
+    #actualizar total de la orden:
+    #si aún existe la orden... entonces:
+    order_qs = Order.objects.filter(user=request.user, ordered=False)
+    if order_qs.exists() and was_there:
+        order = order_qs[0]
+        total_act = order.total
+        total_aft = total_act - item.get_final_price()
+        order_qs.update(total=total_aft)
+
     return redirect("core:product", pk=pk)
 
 
@@ -227,6 +291,15 @@ def add_to_cart_os(request, pk):
         oi = OrderItem(item=item, order=r, quantity=1)
         oi.save()
         messages.info(request, "El producto se agregó a tu carrito.")
+
+    #actualizar total de la orden:
+    #garantizamos que ya existe la orden... entonces:
+    order_qs = Order.objects.filter(user=request.user, ordered=False)
+    order = order_qs[0]
+    total_act = order.total
+    total_aft = total_act + item.get_final_price()
+    order_qs.update(total=total_aft)
+
     return redirect("core:order-summary")
 
 
@@ -234,6 +307,7 @@ def add_to_cart_os(request, pk):
 def remove_from_cart_os(request, pk):
     item = get_object_or_404(Item, id=pk)
     order_qs = Order.objects.filter(user=request.user, ordered=False)
+    was_there = False
     if order_qs.exists():
         order = order_qs[0]
         order_item = OrderItem.objects.filter(item=item, order=order)
@@ -247,6 +321,7 @@ def remove_from_cart_os(request, pk):
             messages.info(request,
                           "La cantidad de productos ha sido actualizada.")
             #return redirect("core:product", slug=slug)
+            was_there = True
         else:
             messages.info(request, "Este producto no estaba en tu carrito.")
             #return redirect("core:product", slug=slug)
@@ -258,6 +333,16 @@ def remove_from_cart_os(request, pk):
         order_item = OrderItem.objects.filter(order=order)
         if not order_item.exists():
             order.delete()
+
+    #actualizar total de la orden:
+    #si aún existe la orden... entonces:
+    order_qs = Order.objects.filter(user=request.user, ordered=False)
+    if order_qs.exists() and was_there:
+        order = order_qs[0]
+        total_act = order.total
+        total_aft = total_act - item.get_final_price()
+        order_qs.update(total=total_aft)
+
     return redirect("core:order-summary")
 
 
@@ -265,27 +350,36 @@ def remove_from_cart_os(request, pk):
 def delete_from_cart_os(request, pk):
     item = get_object_or_404(Item, id=pk)
     order_qs = Order.objects.filter(user=request.user, ordered=False)
+    quantity = 0
     if order_qs.exists():
         order = order_qs[0]
         order_item = OrderItem.objects.filter(item=item, order=order)
-        # check if the order item is in the order
+        # si existen... borramos los registros order-item
         if order_item.exists():
             order_item_inst = order_item[0]
+            quantity = order_item_inst.quantity
             order_item_inst.delete()
             messages.info(request,
                           "La cantidad de productos ha sido actualizada.")
-            #return redirect("core:product", slug=slug)
         else:
             messages.info(request, "Este producto no estaba en tu carrito.")
-            #return redirect("core:product", slug=slug)
     else:
         messages.info(request, "Tu carrito está vacio.")
-        #return redirect("core:product", slug=slug)
     if order_qs.exists():
         order = order_qs[0]
         order_item = OrderItem.objects.filter(order=order)
         if not order_item.exists():
             order.delete()
+
+    #actualizar total de la orden:
+    #si aún existe la orden... entonces:
+    order_qs = Order.objects.filter(user=request.user, ordered=False)
+    if order_qs.exists():
+        order = order_qs[0]
+        total_act = order.total
+        total_aft = total_act - quantity * item.get_final_price()
+        order_qs.update(total=total_aft)
+
     return redirect("core:order-summary")
 
 

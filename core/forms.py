@@ -2,7 +2,8 @@ from django import forms
 from django_countries.fields import CountryField
 from django_countries.widgets import CountrySelectWidget
 
-PAY_CHOICES = (('E', 'Efectivo'), ('T', 'Transferencia'))
+PAY_CHOICES = (('E', 'Efectivo'), ('T', 'Transferencia'), ('V',
+                                                           'VISA/MASTERCARD'))
 
 
 class CheckoutForm(forms.Form):
