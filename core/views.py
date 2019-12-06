@@ -324,87 +324,87 @@ class CheckoutView(LoginRequiredMixin, View):
 
     def post(self, *args, **kwargs):
 
+        qs = Order.objects.filter(user=self.request.user, ordered=False)
         try:
-            qs = Order.objects.filter(user=self.request.user, ordered=False)
             o = qs[0]  #aquí debe mandar la axcepción...
-
-            form = CheckoutForm(self.request.POST or None)
-            print(self.request.POST)
-            if form.is_valid():
-                shipping_address = form.cleaned_data.get('shipping_address')
-                shipping_address2 = form.cleaned_data.get('shipping_address2')
-                shipping_country = form.cleaned_data.get('shipping_country')
-                shipping_zip = form.cleaned_data.get('shipping_zip')
-                same_billing_address = form.cleaned_data.get(
-                    'same_billing_address')
-                #save_information = form.cleaned_data.get('save_information')
-                payment_option = form.cleaned_data.get('payment_option')
-
-                #buscamos la direccion principal asociada al usurio que envía la orden
-                address_qs = Address.objects.filter(user=self.request.user,
-                                                    main=True)
-                #si existe (solo habrá uno debido "unique together") lo actualizamos
-                if address_qs.exists():
-                    address_qs.update(street_address=shipping_address,
-                                      city=shipping_address2,
-                                      country=shipping_country,
-                                      zip=shipping_zip)
-                else:  #en otro caso, lo creamos...
-                    address = Address(user=self.request.user,
-                                      street_address=shipping_address,
-                                      city=shipping_address2,
-                                      country=shipping_country,
-                                      zip=shipping_zip,
-                                      main=True)
-                    address.save()
-
-                order_qs = Order.objects.filter(user=self.request.user,
-                                                ordered=False)
-                if same_billing_address:
-                    #buscamos la direccion de envío asociada al usurio que envía la orden
-                    address_qs_sc = Address.objects.filter(
-                        user=self.request.user, main=False)
-                    #si existe (solo habrá uno debido "unique together"), lo actualizamos
-                    if address_qs_sc.exists():
-                        address_qs_sc.update(street_address=shipping_address,
-                                             city=shipping_address2,
-                                             country=shipping_country,
-                                             zip=shipping_zip)
-                        address_sc = address_qs_sc[0]
-                        order_qs.update(pay_method=payment_option,
-                                        address=address_sc)
-                    else:
-                        address_sc = Address(user=self.request.user,
-                                             street_address=shipping_address,
-                                             city=shipping_address2,
-                                             country=shipping_country,
-                                             zip=shipping_zip,
-                                             main=False)
-                        address_sc.save()
-                        order_qs.update(pay_method=payment_option,
-                                        address=address_sc)
-                else:
-                    order_qs.update(pay_method=payment_option)
-                if not payment_option == 'E':
-                    return redirect('core:shipping-options')
-                else:
-                    was_p = o.shipping_option == 'P'
-                    qs.update(shipping_option='T')
-                    if was_p:
-                        qs.update(total=o.total - 50)
-                    return redirect('core:order-detail')
-
-                #print(form.cleaned_data)
-                #print("the form is valid")
-            else:
-                messages.warning(self.request, "Falló el formulario checkout")
-                return redirect('core:checkout')
         except:
             messages.info(
                 self.request,
                 "imposible crear la orden... no tienes productos en tu carrito"
             )
             return redirect('/')
+
+        form = CheckoutForm(self.request.POST or None)
+        print(self.request.POST)
+        if form.is_valid():
+            shipping_address = form.cleaned_data.get('shipping_address')
+            shipping_address2 = form.cleaned_data.get('shipping_address2')
+            shipping_country = form.cleaned_data.get('shipping_country')
+            shipping_zip = form.cleaned_data.get('shipping_zip')
+            same_billing_address = form.cleaned_data.get(
+                'same_billing_address')
+            #save_information = form.cleaned_data.get('save_information')
+            payment_option = form.cleaned_data.get('payment_option')
+
+            #buscamos la direccion principal asociada al usurio que envía la orden
+            address_qs = Address.objects.filter(user=self.request.user,
+                                                main=True)
+            #si existe (solo habrá uno debido "unique together") lo actualizamos
+            if address_qs.exists():
+                address_qs.update(street_address=shipping_address,
+                                  city=shipping_address2,
+                                  country=shipping_country,
+                                  zip=shipping_zip)
+            else:  #en otro caso, lo creamos...
+                address = Address(user=self.request.user,
+                                  street_address=shipping_address,
+                                  city=shipping_address2,
+                                  country=shipping_country,
+                                  zip=shipping_zip,
+                                  main=True)
+                address.save()
+
+            order_qs = Order.objects.filter(user=self.request.user,
+                                            ordered=False)
+            if same_billing_address:
+                #buscamos la direccion de envío asociada al usurio que envía la orden
+                address_qs_sc = Address.objects.filter(user=self.request.user,
+                                                       main=False)
+                #si existe (solo habrá uno debido "unique together"), lo actualizamos
+                if address_qs_sc.exists():
+                    address_qs_sc.update(street_address=shipping_address,
+                                         city=shipping_address2,
+                                         country=shipping_country,
+                                         zip=shipping_zip)
+                    address_sc = address_qs_sc[0]
+                    order_qs.update(pay_method=payment_option,
+                                    address=address_sc)
+                else:
+                    address_sc = Address(user=self.request.user,
+                                         street_address=shipping_address,
+                                         city=shipping_address2,
+                                         country=shipping_country,
+                                         zip=shipping_zip,
+                                         main=False)
+                    address_sc.save()
+                    order_qs.update(pay_method=payment_option,
+                                    address=address_sc)
+            else:
+                order_qs.update(pay_method=payment_option)
+            if not payment_option == 'E':
+                return redirect('core:shipping-options')
+            else:
+                was_p = o.shipping_option == 'P'
+                qs.update(shipping_option='T')
+                if was_p:
+                    qs.update(total=o.total - 50)
+                return redirect('core:order-detail')
+
+            #print(form.cleaned_data)
+            #print("the form is valid")
+        else:
+            messages.warning(self.request, "Falló el formulario checkout")
+            return redirect('core:checkout')
 
 
 class ItemDetailView(DetailView):
