@@ -49,11 +49,11 @@
                             // have more than 1 button of that class
                             document.getElementsByClassName("stripe-button-el")[0].style.display = 'none';
                         </script>
-                        <button type="submit" class="btn btn-primary btn-lg btn-block">Proceder al pago</button>
+                        <button type="submit" class="btn btn-success btn-lg btn-block">Proceder al pago</button>
                     </form>
                     {% else %}
                     {% if order.pay_method != None %}
-                    <button class="btn btn-primary btn-lg btn-block">Terminar la compra</button>
+                    <a class="btn btn-success btn-lg btn-block" href="/charge-cash/">Terminar la compra</a>
                     {% endif %}
                     {% endif %}
                 </div>

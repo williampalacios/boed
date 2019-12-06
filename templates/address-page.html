@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block head_title %}Bicicletas Once / Dirección de envío{% endblock %}
+
+{% block content %}
+{% load crispy_forms_tags %}
+
+<body class="grey lighten-3">
+    <!--Main layout-->
+    <main>
+        <div class="container wow fadeIn">
+
+            <!-- Heading -->
+            <h2 class="my-5 h2 text-left">Dirección de envío:</h2>
+
+            <!--Grid row-->
+            <div class="row">
+
+                <!--Grid column-->
+                <div class="col-md-8 mb-4">
+                    <!--Card-->
+                    <div class="card">
+
+                        <!--Card content-->
+                        <form method="POST" class="card-body">
+                            {% csrf_token %}
+
+                            <!--address-->
+                            <div class="md-form mb-5">
+                                {{ form.shipping_address }}
+                                <label for="address" class="">Calle y Número</label>
+                            </div>
+
+                            <!--address-2-->
+                            <div class="md-form mb-5">
+                                {{ form.shipping_address2 }}
+                                <label for="address-2" class="">Ciudad</label>
+                            </div>
+
+                            <div>
+                                <small>
+                                    <p class="font-weight-light">País:</p>
+                                </small>
+                            </div>
+
+                            <div>
+                                {{ form.shipping_country }}
+                            </div>
+
+                            <div class="my-5 md-form mb-5">
+                                {{ form.shipping_zip }}
+                                <label for="zip" class="">Código Postal</label>
+                            </div>
+
+                            <hr class="mb-4">
+                            <button class="btn btn-primary btn-lg btn-block" type="submit">Continuar</button>
+
+                        </form>
+
+                    </div>
+                    <!--/.Card-->
+
+                </div>
+                <!--Grid column-->
+            </div>
+            <!--Grid row-->
+
+        </div>
+    </main>
+    <!--Main layout-->
+
+    {% endblock content %}

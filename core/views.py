@@ -6,9 +6,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Item, Order, OrderItem, Address
-from .forms import CheckoutForm
+from .forms import CheckoutForm, AddressForm, ShippingOptionsForm
 from django.core.paginator import Paginator
 from django.conf import settings
+from django.core.mail import send_mail
 import stripe
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -65,13 +66,64 @@ class OrderSummaryView(LoginRequiredMixin, View):
             return redirect('/')
 
 
+class ShippingOptionsView(LoginRequiredMixin, View):
+    def get(self, *args, **kwargs):
+        form = ShippingOptionsForm()
+        context = {'form': form}
+        return render(self.request, "shipping-options.html", context)
+
+    def post(self, *args, **kwargs):
+        try:
+            qs = Order.objects.filter(user=self.request.user, ordered=False)
+            o = qs[0]  #aquí debe mandar la axcepción...
+
+            form = ShippingOptionsForm(self.request.POST or None)
+            if form.is_valid():
+                shipping_option = form.cleaned_data.get('shipping_option')
+
+                #buscamos la direccion de facturación asociada al usurio que envía la orden
+                address_qs = Address.objects.filter(user=self.request.user,
+                                                    main=True)
+
+                #si no la tiene, lo mandamos a crear una...
+                if not address_qs.exists():
+                    messages.info(
+                        self.request,
+                        "Aún no tenemos tu información de facturación, por favor llena el formulario"
+                    )
+                    return redirect('core:checkout')
+                else:  #actualizamos el método de envío en su orden
+                    o = qs[0]
+                    was_p = o.shipping_option == 'P'
+                    qs.update(shipping_option=shipping_option)
+                    if shipping_option == 'P':
+                        if not was_p:
+                            qs.update(total=o.total + 50)
+                        return redirect('core:address')
+                    else:
+                        if was_p:
+                            qs.update(total=o.total - 50)
+                        return redirect('core:order-detail')
+            else:
+                messages.warning(self.request,
+                                 "Falló el formulario shipping_options")
+                return redirect('core:shipping-options')
+        except:
+            messages.info(
+                self.request,
+                "imposible crear la orden... no tienes productos en tu carrito"
+            )
+            return redirect('/')
+
+
 class OrderDetailView(LoginRequiredMixin, View):
     def get(self, *args, **kwargs):
         try:
             qs = Order.objects.filter(user=self.request.user, ordered=False)
             o = qs[0]
             name = self.request.user.first_name + " " + self.request.user.last_name
-            address_qs = Address.objects.filter(user=self.request.user)
+            address_qs = Address.objects.filter(user=self.request.user,
+                                                main=True)
             a = address_qs[0]
             total = o.total * 100
             key = settings.STRIPE_PUBLISHABLE_KEY
@@ -90,7 +142,14 @@ class OrderDetailView(LoginRequiredMixin, View):
 
 def charge(request):
     qs = Order.objects.filter(user=request.user, ordered=False)
-    o = qs[0]
+    try:
+        o = qs[0]
+    except:
+        messages.info(
+            request,
+            "No se pudo completar la compra, NO se realizó ningún cargo a su tarjeta"
+        )
+        return redirect('/')
     amount = round(o.total) * 100
     if request.method == 'POST':
         charge = stripe.Charge.create(amount=amount,
@@ -99,13 +158,167 @@ def charge(request):
                                       source=request.POST['stripeToken'])
         messages.info(request, "Pago exitoso")
         qs.update(ordered=True, ordered_date=timezone.now(), paid=True)
-        return render(request, 'charge.html')
+
+        #Mailing
+        message = "¡Gracias por su compra!\nDetalles del pedido NUM. " + str(
+            o.id) + "\n"
+        orderItem_qs = OrderItem.objects.filter(order=o)
+        prodStr = ""
+        for E in orderItem_qs:
+            prodStr = prodStr + str(E.item) + " | " + str(
+                E.quantity) + " | $" + str(E.get_total_final_price()) + "\n"
+        message = message + prodStr
+        if o.shipping_option == 'P':
+            message = message + "Costo de envío: $50\n"
+        message = message + "Total: $" + str(o.total)
+        if o.pay_method == 'V':
+            message = message + "\nPagado con VISA/MASTERCARD"
+        message = message + "\nMétodo de envío: "
+        if o.shipping_option == 'P':
+            message = message + "Paquetería, se ennviará a: " + o.address.street_address + " en un plazo máximo de 48 horas.\n\n¡Es un placer atenderle!\nSoporte: mich.palacios.hdz@gmail.com, 5526774403"
+        else:
+            message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 | Iztapalapa | Ciudad de México | C.P. 09310) Teléfono: 5526774403\n" + "\n¡Es un placer atenderle!\nSoporte: mich.palacios.hdz@gmail.com, 5526774403"
+        send_mail(
+            'Resumen de su compra en bicicletasonce.com.mx',
+            message,
+            settings.EMAIL_HOST_USER,
+            [request.user.email],
+            fail_silently=False,
+        )
+
+        context = {'email': request.user.email}
+        return render(request, 'charge.html', context)
 
 
-class CheckoutView(View):
+class chargeCash(LoginRequiredMixin, View):
     def get(self, *args, **kwargs):
+        qs = Order.objects.filter(user=self.request.user, ordered=False)
+        try:
+            o = qs[0]
+        except:
+            messages.info(self.request, "No se pudo completar la compra")
+            return redirect('/')
+        qs.update(ordered=True, ordered_date=timezone.now())
 
+        #Mailing
+        message = "¡Gracias por su compra!\nDetalles del pedido NUM. " + str(
+            o.id) + "\n"
+        orderItem_qs = OrderItem.objects.filter(order=o)
+        prodStr = ""
+        for E in orderItem_qs:
+            prodStr = prodStr + E.item.title + " | " + str(
+                E.quantity) + " | $" + str(E.get_total_final_price()) + "\n"
+        message = message + prodStr
+        if o.shipping_option == 'P':
+            message = message + "Costo de envío: $50\n"
+        message = message + "Total: $" + str(o.total)
+        if o.pay_method == 'V':
+            message = message + "\n Pagado con VISA/MASTERCARD"
+        message = message + "\nMétodo de envío: "
+        if o.shipping_option == 'P':
+            message = message + "Paquetería, una vez validado el pago, se ennviará a: " + o.address.street_address + "\nDebe enviar un mensaje por WhatsApp con el comprobante de pago al 5526774403 EN UN PLAZO NO MAYOR A 24 HORAS despues de su compra.\n" + "\n¡Es un placer atenderle!\nSoporte: mich.palacios.hdz@gmail.com, 5526774403"
+        else:
+            message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 | Iztapalapa | Ciudad de México | C.P. 09310) Teléfono: 5526774403\n" + "\n¡Es un placer atenderle!\nSoporte: mich.palacios.hdz@gmail.com, 5526774403"
+        send_mail(
+            'Resumen de su compra en bicicletasonce.com.mx',
+            message,
+            settings.EMAIL_HOST_USER,
+            [self.request.user.email],
+            fail_silently=False,
+        )
+        context = {'email': self.request.user.email}
+        return render(self.request, "charge.html", context)
+
+
+class AddressView(LoginRequiredMixin, View):
+    def get(self, *args, **kwargs):
+        form = AddressForm()
+        address_qs = Address.objects.filter(user=self.request.user, main=False)
+        if address_qs.exists():
+            a = address_qs[0]
+            form.fields['shipping_address'].initial = a.street_address
+            form.fields['shipping_address2'].initial = a.city
+            form.fields['shipping_country'].initial = a.country
+            form.fields['shipping_zip'].initial = a.zip
+        context = {'form': form}
+        return render(self.request, "address-page.html", context)
+
+    def post(self, *args, **kwargs):
+        try:
+            qs = Order.objects.filter(user=self.request.user, ordered=False)
+            o = qs[0]  #aquí debe mandar la axcepción...
+
+            form = AddressForm(self.request.POST or None)
+            if form.is_valid():
+                shipping_address = form.cleaned_data.get('shipping_address')
+                shipping_address2 = form.cleaned_data.get('shipping_address2')
+                shipping_country = form.cleaned_data.get('shipping_country')
+                shipping_zip = form.cleaned_data.get('shipping_zip')
+
+                order_qs = Order.objects.filter(user=self.request.user,
+                                                ordered=False)
+                #buscamos la direccion de envío asociada al usurio que envía la orden y su dirección de facturación
+                address_qs_sc = Address.objects.filter(user=self.request.user,
+                                                       main=False)
+                address_qs = Address.objects.filter(user=self.request.user,
+                                                    main=True)
+
+                #si existe la direccion de envío asociada (solo habrá uno debido "unique together"), lo actualizamos
+                if address_qs_sc.exists():
+                    address_qs_sc.update(street_address=shipping_address,
+                                         city=shipping_address2,
+                                         country=shipping_country,
+                                         zip=shipping_zip)
+                    address_sc = address_qs_sc[0]
+                    order_qs.update(address=address_sc)
+                    #si tiene dirección de facturación:
+                    if address_qs.exists():
+                        return redirect('core:order-detail')
+                    else:
+                        messages.info(
+                            self.request,
+                            "Aún no tenemos tu información de facturación, por favor llena el formulario"
+                        )
+                        return redirect('core:checkout')
+                else:  #la creamos
+                    address_sc = Address(user=self.request.user,
+                                         street_address=shipping_address,
+                                         city=shipping_address2,
+                                         country=shipping_country,
+                                         zip=shipping_zip,
+                                         main=False)
+                    address_sc.save()
+                    order_qs.update(address=address_sc)
+                    #si tiene dirección de facturación:
+                    if address_qs.exists():
+                        return redirect('core:order-detail')
+                    else:
+                        messages.info(
+                            self.request,
+                            "Aún no tenemos tu información de facturación, por favor llena el formulario"
+                        )
+                        return redirect('core:checkout')
+            else:
+                messages.warning(self.request, "Falló el formulario address")
+                return redirect('core:address')
+        except:
+            messages.info(
+                self.request,
+                "imposible crear la orden... no tienes productos en tu carrito"
+            )
+            return redirect('/')
+
+
+class CheckoutView(LoginRequiredMixin, View):
+    def get(self, *args, **kwargs):
         form = CheckoutForm()
+        address_qs = Address.objects.filter(user=self.request.user, main=True)
+        if address_qs.exists():
+            a = address_qs[0]
+            form.fields['shipping_address'].initial = a.street_address
+            form.fields['shipping_address2'].initial = a.city
+            form.fields['shipping_country'].initial = a.country
+            form.fields['shipping_zip'].initial = a.zip
         context = {'form': form}
         return render(self.request, "checkout-page.html", context)
 
@@ -122,12 +335,15 @@ class CheckoutView(View):
                 shipping_address2 = form.cleaned_data.get('shipping_address2')
                 shipping_country = form.cleaned_data.get('shipping_country')
                 shipping_zip = form.cleaned_data.get('shipping_zip')
-                #same_billing_address = form.cleaned_data.get('same_billing_address')
+                same_billing_address = form.cleaned_data.get(
+                    'same_billing_address')
                 #save_information = form.cleaned_data.get('save_information')
                 payment_option = form.cleaned_data.get('payment_option')
-                #buscamos la direccion asociada al usurio que envía la orden
-                address_qs = Address.objects.filter(user=self.request.user)
-                #si existe (solo habrá uno debido a la relación 1-1) lo actualizamos
+
+                #buscamos la direccion principal asociada al usurio que envía la orden
+                address_qs = Address.objects.filter(user=self.request.user,
+                                                    main=True)
+                #si existe (solo habrá uno debido "unique together") lo actualizamos
                 if address_qs.exists():
                     address_qs.update(street_address=shipping_address,
                                       city=shipping_address2,
@@ -138,25 +354,51 @@ class CheckoutView(View):
                                       street_address=shipping_address,
                                       city=shipping_address2,
                                       country=shipping_country,
-                                      zip=shipping_zip)
+                                      zip=shipping_zip,
+                                      main=True)
                     address.save()
-                #buscar Order con usuario request.user y ordered=False (¿Existe la orden?).
+
                 order_qs = Order.objects.filter(user=self.request.user,
                                                 ordered=False)
-                #si existe, solo debe haber un registro en el qs con ordered=False
-                if order_qs.exists():
-                    #actualizar el registro
-                    order_qs.update(
-                        pay_method=payment_option
-                    )  #, ordered=True, ordered_date=timezone.now())
+                if same_billing_address:
+                    #buscamos la direccion de envío asociada al usurio que envía la orden
+                    address_qs_sc = Address.objects.filter(
+                        user=self.request.user, main=False)
+                    #si existe (solo habrá uno debido "unique together"), lo actualizamos
+                    if address_qs_sc.exists():
+                        address_qs_sc.update(street_address=shipping_address,
+                                             city=shipping_address2,
+                                             country=shipping_country,
+                                             zip=shipping_zip)
+                        address_sc = address_qs_sc[0]
+                        order_qs.update(pay_method=payment_option,
+                                        address=address_sc)
+                    else:
+                        address_sc = Address(user=self.request.user,
+                                             street_address=shipping_address,
+                                             city=shipping_address2,
+                                             country=shipping_country,
+                                             zip=shipping_zip,
+                                             main=False)
+                        address_sc.save()
+                        order_qs.update(pay_method=payment_option,
+                                        address=address_sc)
+                else:
+                    order_qs.update(pay_method=payment_option)
+                if not payment_option == 'E':
+                    return redirect('core:shipping-options')
+                else:
+                    was_p = o.shipping_option == 'P'
+                    qs.update(shipping_option='T')
+                    if was_p:
+                        qs.update(total=o.total - 50)
+                    return redirect('core:order-detail')
+
                 #print(form.cleaned_data)
                 #print("the form is valid")
-                #messages.info(self.request, "Tu pedido fue realizado con éxito.")
-
-                return redirect('core:order-detail')
-            messages.warning(self.request, "Failed checkout")
-            return redirect('core:checkout')
-
+            else:
+                messages.warning(self.request, "Falló el formulario checkout")
+                return redirect('core:checkout')
         except:
             messages.info(
                 self.request,

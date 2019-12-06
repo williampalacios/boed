@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block head_title %}Bicicletas Once / Opciones de envío{% endblock %}
+
+{% block content %}
+{% load crispy_forms_tags %}
+
+<body class="grey lighten-3">
+    <!--Main layout-->
+    <main>
+        <div class="container wow fadeIn">
+
+            <!-- Heading -->
+            <h2 class="my-5 h2 text-left">Opciones de envío:</h2>
+
+            <!--Grid row-->
+            <div class="row">
+
+                <!--Grid column-->
+                <div class="col-md-8 mb-4">
+                    <!--Card-->
+                    <div class="card">
+                        <!--Card content-->
+                        <form method="POST" class="card-body">
+                            <p class="card-text">*El servicio de paquetería solo está disponible en Ciudad de México y
+                                tiene un costo de $50 MXN.</p>
+                            <p class="card-text">*La recoleccíon en tienda se realiza en nustra tienda física
+                                BicicetasOnce. Ubicada en Ciudad de México, Alcaldía
+                                Iztapalapa.</p>
+                            {% csrf_token %}
+                            <div class="d-block my-3">
+                                {% for v, n in form.fields.shipping_option.choices %}
+                                <div class="custom-control custom-radio">
+                                    <input id="{{ n }}" name="shipping_option" value="{{ v }}" type="radio"
+                                        class="custom-control-input" checked required>
+                                    <label class="custom-control-label" for="{{ n }}">{{ n }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <hr class="mb-4">
+                            <button class="btn btn-primary btn-lg btn-block" type="submit">Continuar</button>
+
+                        </form>
+
+                    </div>
+                    <!--/.Card-->
+
+                </div>
+                <!--Grid column-->
+            </div>
+            <!--Grid row-->
+
+        </div>
+    </main>
+    <!--Main layout-->
+
+    {% endblock content %}

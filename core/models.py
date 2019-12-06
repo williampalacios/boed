@@ -11,6 +11,8 @@ LABEL_CHOICES = (('P', 'primary'), ('S', 'secondary'), ('D', 'danger'))
 PAY_CHOICES = (('E', 'Efectivo'), ('T', 'Transferencia'), ('V',
                                                            'VISA/MASTERCARD'))
 
+SHI_CHOICES = (('P', 'paquetería'), ('T', 'tienda'))
+
 
 class Item(models.Model):
     title = models.CharField(max_length=100)
@@ -48,16 +50,47 @@ class Item(models.Model):
         return self.price
 
 
+class Address(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    street_address = models.CharField(max_length=100, null=False)
+    city = models.CharField(max_length=100, null=False)
+    country = CountryField(multiple=False, null=False)
+    zip = models.CharField(max_length=10, null=False)
+    main = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.street_address + " | " + self.city + " | " + str(
+            self.country
+        ) + " | " + self.zip + " | " + self.user.first_name + " | " + str(
+            self.main)
+
+    class Meta:
+        unique_together = (('user', 'main'))
+
+
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.PROTECT)
     start_date = models.DateTimeField(auto_now_add=True)
-    ordered_date = models.DateTimeField(null=True)
+    ordered_date = models.DateTimeField(null=True, blank=True)
     ordered = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
     sent = models.BooleanField(default=False)
-    pay_method = models.CharField(choices=PAY_CHOICES, max_length=1, null=True)
+    pay_method = models.CharField(choices=PAY_CHOICES,
+                                  max_length=1,
+                                  null=True,
+                                  blank=True)
     total = models.FloatField(default=0)
+    same_billing_address = models.BooleanField(default=False)
+    address = models.ForeignKey(Address,
+                                on_delete=models.SET_NULL,
+                                null=True,
+                                blank=True)
+    shipping_option = models.CharField(choices=SHI_CHOICES,
+                                       max_length=1,
+                                       null=True,
+                                       blank=True)
 
     def __str__(self):
         return "pedido " + str(
@@ -93,17 +126,3 @@ class OrderItem(models.Model):
 
     class Meta:
         unique_together = (('item', 'order'))
-
-
-class Address(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL,
-                                on_delete=models.CASCADE,
-                                primary_key=True)
-    street_address = models.CharField(max_length=100, null=False)
-    city = models.CharField(max_length=100, null=False)
-    country = CountryField(multiple=False, null=False)
-    zip = models.CharField(max_length=10, null=False)
-
-    def __str__(self):
-        return self.street_address + "; " + self.city + "; " + str(
-            self.country) + "; " + self.zip

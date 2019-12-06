@@ -11,7 +11,7 @@
     <div class="container wow fadeIn">
 
       <!-- Heading -->
-      <h2 class="my-5 h2 text-left">Detalles de Pedido:</h2>
+      <h2 class="my-5 h2 text-left">Detalles del Pago:</h2>
 
       <!--Grid row-->
       <div class="row">
@@ -36,6 +36,10 @@
             <form method="POST" class="card-body">
               {% csrf_token %}
 
+              <div class="h6 text-left">
+                Dirección de facturación:
+              </div>
+
               <!--address-->
               <div class="md-form mb-5">
                 {{ form.shipping_address }}
@@ -58,10 +62,16 @@
                 {{ form.shipping_country }}
               </div>
 
-              <div class="md-form mb-5">
+              <div class="my-5 md-form mb-5">
                 {{ form.shipping_zip }}
                 <label for="zip" class="">Código Postal</label>
               </div>
+
+              <div class="mb-5">
+                {{ form.same_billing_address }}
+                <label>Usar esta dirección como dirección de envío</label>
+              </div>
+
               {% comment %}
               <!--Grid row-->
               <div class="row">
@@ -98,6 +108,10 @@
               <hr>
               {% endcomment %}
 
+              <div class="h6 text-left">
+                Tipo de pago:
+              </div>
+
               <div class="d-block my-3">
                 {% for v, n in form.fields.payment_option.choices %}
                 <div class="custom-control custom-radio">
@@ -107,6 +121,7 @@
                 </div>
                 {% endfor %}
               </div>
+
               {% comment %}
               <div class="row">
                 <div class="col-md-6 mb-3">
