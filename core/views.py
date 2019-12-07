@@ -171,8 +171,7 @@ def charge(request):
         if o.shipping_option == 'P':
             message = message + "Costo de envío: $50\n"
         message = message + "Total: $" + str(o.total)
-        if o.pay_method == 'V':
-            message = message + "\nPagado con VISA/MASTERCARD"
+        message = message + "\nPagado con VISA/MASTERCARD"
         message = message + "\nMétodo de envío: "
         if o.shipping_option == 'P':
             message = message + "Paquetería, se ennviará a: " + o.address.street_address + " en un plazo máximo de 48 horas.\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
@@ -214,8 +213,10 @@ class chargeCash(LoginRequiredMixin, View):
         if o.shipping_option == 'P':
             message = message + "Costo de envío: $50\n"
         message = message + "Total: $" + str(o.total)
-        if o.pay_method == 'V':
-            message = message + "\n Pagado con VISA/MASTERCARD"
+        if o.pay_method == 'E':
+            message = message + "\n A pagar en efectivo."
+        else:
+            message = message + "\n A pagar por transferencia/depósito."
         message = message + "\nMétodo de envío: "
         if o.shipping_option == 'P':
             message = message + "Paquetería, una vez validado el pago, se ennviará a: " + o.address.street_address
@@ -227,7 +228,7 @@ class chargeCash(LoginRequiredMixin, View):
         else:
             if o.pay_method == "E":
                 message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 Iztapalapa Ciudad de México C.P. 09310) Teléfono: 5526774403"
-                message = message + "\nPor favor le pedimos que confirme su pedido mandando un mensaje con su NUM. DE PEDIDO por WhatsApp al 5526774403. Una vez que confirme, el equipo de Bicicletas Once preparará sus productos para ser entregados"
+                message = message + "\nPor favor le pedimos que confirme su pedido mandando un mensaje con su NUM. DE PEDIDO por WhatsApp al 5526774403. Una vez que confirme, el equipo de Bicicletas Once preparará sus productos para ser entregados."
                 message = message + "\nPuede recoger su pedido pasadas 24 horas de su confirmación por WhatsApp"
                 message = message + "\nEn caso de NO CONFIRMAR en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
                 message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
