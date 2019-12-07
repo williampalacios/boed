@@ -175,11 +175,13 @@ def charge(request):
             message = message + "\nPagado con VISA/MASTERCARD"
         message = message + "\nMétodo de envío: "
         if o.shipping_option == 'P':
-            message = message + "Paquetería, se ennviará a: " + o.address.street_address + " en un plazo máximo de 48 horas.\n\n¡Es un placer atenderle!\nSoporte: mich.palacios.hdz@gmail.com, 5526774403"
+            message = message + "Paquetería, se ennviará a: " + o.address.street_address + " en un plazo máximo de 48 horas.\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
         else:
-            message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 | Iztapalapa | Ciudad de México | C.P. 09310) Teléfono: 5526774403\n" + "\n¡Es un placer atenderle!\nSoporte: mich.palacios.hdz@gmail.com, 5526774403"
+            message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 Iztapalapa Ciudad de México C.P. 09310) Teléfono: 5526774403"
+            message = message + "\nPuede recoger su pedido pasadas 24 horas de haber recibido este correo"
+            message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
         send_mail(
-            'Resumen de su compra en bicicletasonce.com.mx',
+            'Resumen de su compra en www.bicicletasonce.com.mx',
             message,
             settings.EMAIL_HOST_USER,
             [request.user.email],
@@ -216,11 +218,29 @@ class chargeCash(LoginRequiredMixin, View):
             message = message + "\n Pagado con VISA/MASTERCARD"
         message = message + "\nMétodo de envío: "
         if o.shipping_option == 'P':
-            message = message + "Paquetería, una vez validado el pago, se ennviará a: " + o.address.street_address + "\nDebe enviar un mensaje por WhatsApp con el comprobante de pago al 5526774403 EN UN PLAZO NO MAYOR A 24 HORAS despues de su compra.\n" + "\n¡Es un placer atenderle!\nSoporte: mich.palacios.hdz@gmail.com, 5526774403"
+            message = message + "Paquetería, una vez validado el pago, se ennviará a: " + o.address.street_address
+            message = message + "\nDebe enviar un mensaje por WhatsApp con el COMPROBANTE DE PAGO y NUM. DE PEDIDO al 5526774403 EN UN PLAZO NO MAYOR A 24 HORAS despues de su compra."
+            message = message + "\n\nDatos para el depósito:\nCuenta de HSBC: 4213 1660 7646 5891\nTipo de cuenta: Débito\nConcepto de pago: bicicletasonce pedido " + str(
+                o.id)
+            message = message + "\nEn caso de NO ENVIAR SU COMPRABANTE en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
+            message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
         else:
-            message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 | Iztapalapa | Ciudad de México | C.P. 09310) Teléfono: 5526774403\n" + "\n¡Es un placer atenderle!\nSoporte: mich.palacios.hdz@gmail.com, 5526774403"
+            if o.pay_method == "E":
+                message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 Iztapalapa Ciudad de México C.P. 09310) Teléfono: 5526774403"
+                message = message + "\nPor favor le pedimos que confirme su pedido mandando un mensaje con su NUM. DE PEDIDO por WhatsApp al 5526774403. Una vez que confirme, el equipo de Bicicletas Once preparará sus productos para ser entregados"
+                message = message + "\nPuede recoger su pedido pasadas 24 horas de su confirmación por WhatsApp"
+                message = message + "\nEn caso de NO CONFIRMAR en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
+                message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
+            else:
+                message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 Iztapalapa Ciudad de México C.P. 09310) Teléfono: 5526774403"
+                message = message + "\nDebe enviar un mensaje por WhatsApp con el COMPROBANTE DE PAGO y NUM. DE PEDIDO al 5526774403 EN UN PLAZO NO MAYOR A 24 HORAS despues de su compra."
+                message = message + "\n\nDatos para el depósito:\nCuenta de HSBC: 4213 1660 7646 5891\nTipo de cuenta: Débito\nConcepto de pago: bicicletasonce pedido " + str(
+                    o.id)
+                message = message + "\nPuede recoger su pedido pasadas 24 horas de haber enviado su comprabante"
+                message = message + "\nEn caso de NO ENVIAR SU COMPRABANTE en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
+                message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
         send_mail(
-            'Resumen de su compra en bicicletasonce.com.mx',
+            'Resumen de su compra en www.bicicletasonce.com.mx',
             message,
             settings.EMAIL_HOST_USER,
             [self.request.user.email],
