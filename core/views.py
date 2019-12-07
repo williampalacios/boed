@@ -214,9 +214,9 @@ class chargeCash(LoginRequiredMixin, View):
             message = message + "Costo de envío: $50\n"
         message = message + "Total: $" + str(o.total)
         if o.pay_method == 'E':
-            message = message + "\n A pagar en efectivo."
+            message = message + "\nA pagar en efectivo."
         else:
-            message = message + "\n A pagar por transferencia/depósito."
+            message = message + "\nA pagar por transferencia/depósito."
         message = message + "\nMétodo de envío: "
         if o.shipping_option == 'P':
             message = message + "Paquetería, una vez validado el pago, se ennviará a: " + o.address.street_address
