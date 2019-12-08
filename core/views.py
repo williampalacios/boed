@@ -15,6 +15,11 @@ import stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
+class PrivacyView(View):
+    def get(self, *args, **kwargs):
+        return render(self.request, 'privacy.html')
+
+
 class HomeView(ListView):
     model = Item
     paginate_by = 8

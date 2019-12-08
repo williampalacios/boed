@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HomeView, CheckoutView, ItemDetailView, add_to_cart, remove_from_cart, OrderSummaryView, add_to_cart_os, remove_from_cart_os, delete_from_cart_os, HomeViewHerr, HomeViewBic, HomeViewRef, OrderDetailView, charge, AddressView, ShippingOptionsView, chargeCash
+from .views import HomeView, CheckoutView, ItemDetailView, add_to_cart, remove_from_cart, OrderSummaryView, add_to_cart_os, remove_from_cart_os, delete_from_cart_os, HomeViewHerr, HomeViewBic, HomeViewRef, OrderDetailView, charge, AddressView, ShippingOptionsView, chargeCash, PrivacyView
 
 app_name = 'core'
 
@@ -11,6 +11,7 @@ urlpatterns = [
     #path('checkout/', CheckoutView, name='checkout'),
     path('checkout/', CheckoutView.as_view(), name='checkout'),
     path('address/', AddressView.as_view(), name='address'),
+    path('privacy/', PrivacyView.as_view(), name='privacy'),
     path('charge-cash/', chargeCash.as_view(), name='charge-cash'),
     path('shipping-options/',
          ShippingOptionsView.as_view(),

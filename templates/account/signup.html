@@ -22,6 +22,10 @@
             {% if redirect_field_value %}
             <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
             {% endif %}
+            <p>
+              Al registrate aceptas que ya has leido nuestro <a href="/privacy/">aviso de privacidad</a>, y que
+              estás deacuerdo con lo que en él se establece.
+            </p>
             <button class="btn btn-primary" type="submit">{% trans "Registrarse" %} &raquo;</button>
           </form>
         </div>
