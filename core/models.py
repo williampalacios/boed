@@ -22,6 +22,8 @@ class Item(models.Model):
     #label = models.CharField(choices=LABEL_CHOICES, max_length=1)
     image = models.ImageField(upload_to='img', null=True, blank=True)
     description = models.TextField()
+    stock = models.IntegerField(default=-1)
+    prov = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -48,6 +50,11 @@ class Item(models.Model):
         if self.discount_price:
             return self.discount_price
         return self.price
+
+    def on_stock(self):
+        if self.stock != 0:
+            return True
+        return False
 
 
 class Address(models.Model):

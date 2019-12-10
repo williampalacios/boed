@@ -4,7 +4,7 @@ from .views import HomeView, CheckoutView, ItemDetailView, add_to_cart, remove_f
 app_name = 'core'
 
 urlpatterns = [
-    path('', HomeView.as_view(), name='home'),
+    path('', HomeView, name='home'),
     path('home-herr/', HomeViewHerr, name='home-herr'),
     path('home-bic/', HomeViewBic, name='home-bic'),
     path('home-ref/', HomeViewRef, name='home-ref'),

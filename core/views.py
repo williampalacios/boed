@@ -14,20 +14,35 @@ import stripe
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+#TODO agregar una vista de contacto y colocarla en el header
+
 
 class PrivacyView(View):
     def get(self, *args, **kwargs):
         return render(self.request, 'privacy.html')
 
 
+def HomeView(request):
+    qs = Item.objects.exclude(stock=0)
+    paginator = Paginator(qs, 8)
+
+    page = request.GET.get('page')
+    herrts = paginator.get_page(page)
+    return render(request, 'home-page.html', {'herrts': herrts})
+
+
+"""
 class HomeView(ListView):
     model = Item
     paginate_by = 8
     template_name = "home-page.html"
+"""
 
 
 def HomeViewHerr(request):
-    qs_herr = Item.objects.filter(category='H')
+    qs = Item.objects.exclude(stock=0)
+    qs_herr = qs.filter(category='H')
+    #qs_herr = Item.objects.filter(category='H')
     paginator = Paginator(qs_herr, 8)
 
     page = request.GET.get('page')
@@ -36,7 +51,8 @@ def HomeViewHerr(request):
 
 
 def HomeViewBic(request):
-    qs_herr = Item.objects.filter(category='B')
+    qs = Item.objects.exclude(stock=0)
+    qs_herr = qs.filter(category='B')
     paginator = Paginator(qs_herr, 8)
 
     page = request.GET.get('page')
@@ -45,7 +61,8 @@ def HomeViewBic(request):
 
 
 def HomeViewRef(request):
-    qs_herr = Item.objects.filter(category='R')
+    qs = Item.objects.exclude(stock=0)
+    qs_herr = qs.filter(category='R')
     paginator = Paginator(qs_herr, 8)
 
     page = request.GET.get('page')
@@ -135,7 +152,7 @@ class OrderDetailView(LoginRequiredMixin, View):
             context = {
                 'order': o,
                 'name': name,
-                'address': a,
+                'address': a.street_address,
                 'total': total,
                 'key': key
             }
@@ -155,13 +172,43 @@ def charge(request):
             "No se pudo completar la compra, NO se realizó ningún cargo a su tarjeta"
         )
         return redirect('/')
+
+    #revisar si cada producto sigue disponible; en caso de que no, redireccionar a order-summary.
+    qs_order_item = OrderItem.objects.filter(order=o)
+    for E in qs_order_item:
+        if E.item.stock >= 0:
+            if E.item.stock >= E.quantity:
+                pass
+            else:
+                msj = "Lo sentimos, por el momento solo tenemos " + str(
+                    E.item.stock
+                ) + " " + str(
+                    E.item
+                ) + " disponible(s), por favor actualice la cantidad o elimine el producto del carrito."
+                messages.info(request, msj)
+                messages.info(request,
+                              "No se realizó ningún cargo a su tarjeta.")
+                return redirect('core:order-summary')
+
     amount = round(o.total) * 100
     if request.method == 'POST':
-        charge = stripe.Charge.create(amount=amount,
-                                      currency='mxn',
-                                      description='pago con stripe',
-                                      source=request.POST['stripeToken'])
-        messages.info(request, "Pago exitoso")
+        #TODO Revisar si el pago con stripe fue exitoso.
+        try:
+            charge = stripe.Charge.create(
+                amount=amount,
+                currency='mxn',
+                description='pago con stripe',
+                receipt_email=request.POST['stripeEmail'],
+                source=request.POST['stripeToken'])
+            messages.info(request, "Pago exitoso")
+        except stripe.error.CardError as e:
+            messages.info(request, e.error.message)
+            return redirect('core:order-detail')
+
+        for E in qs_order_item:
+            qs_item = Item.objects.filter(id=E.item.id)
+            stock = qs_item[0].stock
+            qs_item.update(stock=stock - E.quantity)
         qs.update(ordered=True, ordered_date=timezone.now(), paid=True)
 
         #Mailing
@@ -204,6 +251,26 @@ class chargeCash(LoginRequiredMixin, View):
         except:
             messages.info(self.request, "No se pudo completar la compra")
             return redirect('/')
+
+        #revisar si cada producto sigue disponible; en caso de que no, redireccionar a order-summary.
+        qs_order_item = OrderItem.objects.filter(order=o)
+        for E in qs_order_item:
+            if E.item.stock >= 0:
+                if E.item.stock >= E.quantity:
+                    pass
+                else:
+                    msj = "Lo sentimos, por el momento solo tenemos " + str(
+                        E.item.stock
+                    ) + " " + str(
+                        E.item
+                    ) + " disponible(s), por favor actualice la cantidad o elimine el producto del carrito."
+                    messages.info(self.request, msj)
+                    return redirect('core:order-summary')
+
+        for E in qs_order_item:
+            qs_item = Item.objects.filter(id=E.item.id)
+            stock = qs_item[0].stock
+            qs_item.update(stock=stock - E.quantity)
         qs.update(ordered=True, ordered_date=timezone.now())
 
         #Mailing
@@ -233,7 +300,8 @@ class chargeCash(LoginRequiredMixin, View):
         else:
             if o.pay_method == "E":
                 message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 Iztapalapa Ciudad de México C.P. 09310) Teléfono: 5526774403"
-                message = message + "\nPor favor le pedimos que confirme su pedido mandando un mensaje con su NUM. DE PEDIDO por WhatsApp al 5526774403. Una vez que confirme, el equipo de Bicicletas Once preparará sus productos para ser entregados."
+                message = message + "\nPor favor le pedimos que confirme su pedido mandando un mensaje con su NUM. DE PEDIDO por WhatsApp al 5526774403."
+                message = message + "\nUna vez que confirme, el equipo de Bicicletas Once preparará sus productos para ser entregados."
                 message = message + "\nPuede recoger su pedido pasadas 24 horas de su confirmación por WhatsApp"
                 message = message + "\nEn caso de NO CONFIRMAR en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
                 message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
@@ -463,30 +531,54 @@ def add_to_cart(request, pk):
         # revisar si el item está en la orden
         if order_item.exists():
             order_item_inst = order_item[0]
-            order_item_inst.quantity += 1
-            order_item_inst.save()
-            messages.info(request,
-                          "La cantidad de productos ha sido actualizada.")
+            if order_item_inst.item.stock > -1:
+                if order_item_inst.item.stock > order_item_inst.quantity:
+                    order_item_inst.quantity += 1
+                    order_item_inst.save()
+                    messages.info(
+                        request,
+                        "La cantidad de productos ha sido actualizada.")
+                else:
+                    messages.info(
+                        request,
+                        "No hay suficientes unidades disponibles de este producto."
+                    )
+                    return redirect("core:product", pk=pk)
+            else:
+                order_item_inst.quantity += 1
+                order_item_inst.save()
+                messages.info(request,
+                              "La cantidad de productos ha sido actualizada.")
         else:
-            q = OrderItem(item=item, order=order, quantity=1)
-            q.save()
-            messages.info(request, "El producto se agregó a tu carrito.")
+            if item.stock != 0:
+                q = OrderItem(item=item, order=order, quantity=1)
+                q.save()
+                messages.info(request, "El producto se agregó a tu carrito.")
+            else:
+                messages.info(request,
+                              "Por el momento este producto está agotado.")
+                return redirect("core:product", pk=pk)
     else:
-        ordered_date = timezone.now()
-        r = Order(user=request.user, ordered=False)
-        r.save()
-        oi = OrderItem(item=item, order=r, quantity=1)
-        oi.save()
-        messages.info(request, "El producto se agregó a tu carrito.")
-
+        if item.stock != 0:
+            ordered_date = timezone.now()
+            r = Order(user=request.user, ordered=False)
+            r.save()
+            oi = OrderItem(item=item, order=r, quantity=1)
+            oi.save()
+            messages.info(request, "El producto se agregó a tu carrito.")
+        else:
+            messages.info(request,
+                          "Por el momento este producto está agotado.")
+            return redirect("core:product", pk=pk)
     #actualizar total de la orden:
-    #garantizamos que ya existe la orden... entonces:
     order_qs = Order.objects.filter(user=request.user, ordered=False)
-    order = order_qs[0]
+    try:
+        order = order_qs[0]
+    except:
+        return redirect("core:product", pk=pk)
     total_act = order.total
     total_aft = total_act + item.get_final_price()
     order_qs.update(total=total_aft)
-
     return redirect("core:product", pk=pk)
 
 
@@ -544,30 +636,54 @@ def add_to_cart_os(request, pk):
         # revisar si el item está en la orden
         if order_item.exists():
             order_item_inst = order_item[0]
-            order_item_inst.quantity += 1
-            order_item_inst.save()
-            messages.info(request,
-                          "La cantidad de productos ha sido actualizada.")
+            if order_item_inst.item.stock > -1:
+                if order_item_inst.item.stock > order_item_inst.quantity:
+                    order_item_inst.quantity += 1
+                    order_item_inst.save()
+                    messages.info(
+                        request,
+                        "La cantidad de productos ha sido actualizada.")
+                else:
+                    messages.info(
+                        request,
+                        "No hay suficientes unidades disponibles de este producto."
+                    )
+                    return redirect("core:order-summary")
+            else:
+                order_item_inst.quantity += 1
+                order_item_inst.save()
+                messages.info(request,
+                              "La cantidad de productos ha sido actualizada.")
         else:
-            q = OrderItem(item=item, order=order, quantity=1)
-            q.save()
-            messages.info(request, "El producto se agregó a tu carrito.")
+            if item.stock != 0:
+                q = OrderItem(item=item, order=order, quantity=1)
+                q.save()
+                messages.info(request, "El producto se agregó a tu carrito.")
+            else:
+                messages.info(request,
+                              "Por el momento este producto está agotado.")
+                return redirect("core:order-summary")
     else:
-        ordered_date = timezone.now()
-        r = Order(user=request.user, ordered_date=ordered_date, ordered=False)
-        r.save()
-        oi = OrderItem(item=item, order=r, quantity=1)
-        oi.save()
-        messages.info(request, "El producto se agregó a tu carrito.")
-
+        if item.stock != 0:
+            ordered_date = timezone.now()
+            r = Order(user=request.user, ordered=False)
+            r.save()
+            oi = OrderItem(item=item, order=r, quantity=1)
+            oi.save()
+            messages.info(request, "El producto se agregó a tu carrito.")
+        else:
+            messages.info(request,
+                          "Por el momento este producto está agotado.")
+            return redirect("core:order-summary")
     #actualizar total de la orden:
-    #garantizamos que ya existe la orden... entonces:
     order_qs = Order.objects.filter(user=request.user, ordered=False)
-    order = order_qs[0]
+    try:
+        order = order_qs[0]
+    except:
+        return redirect("core:order-summary")
     total_act = order.total
     total_aft = total_act + item.get_final_price()
     order_qs.update(total=total_aft)
-
     return redirect("core:order-summary")
 
 

@@ -60,7 +60,7 @@
 
       <!--Grid row-->
       <div class="row wow fadeIn">
-        {% for item in object_list %}
+        {% for herr in herrts %}
         <!--Grid column-->
         <div class="col-lg-3 col-md-6 mb-4">
 
@@ -70,8 +70,8 @@
 
             <!--Card image-->
             <div class="view overlay">
-              <img src="{{ item.image.url }}" class="card-img-top" alt="">
-              <a href="{{ item.get_absolute_url }}">
+              <img src="{{ herr.image.url }}" class="card-img-top" alt="">
+              <a href="{{ herr.get_absolute_url }}">
                 <div class="mask rgba-white-slight"></div>
               </a>
             </div>
@@ -81,23 +81,23 @@
             <div class="card-body text-center">
               <!--Category & Title-->
               <a href="" class="grey-text">
-                <h5>{{ item.get_category_display }}</h5>
+                <h5>{{ herr.get_category_display }}</h5>
               </a>
               <h5>
                 <strong>
-                  <a href="{{ item.get_absolute_url }}" class="dark-grey-text">{{ item.title }}
+                  <a href="{{ herr.get_absolute_url }}" class="dark-grey-text">{{ herr.title }}
                     {% comment %}<span
-                      class="badge badge-pill {{ item.get_label_display }}-color">NEW</span>{% endcomment %}
+                      class="badge badge-pill {{ herr.get_label_display }}-color">NEW</span>{% endcomment %}
                   </a>
                 </strong>
               </h5>
 
               <h4 class="font-weight-bold blue-text">
                 <strong>$
-                  {% if item.discount_price %}
-                  {{ item.discount_price }}
+                  {% if herr.discount_price %}
+                  {{ herr.discount_price }}
                   {% else %}
-                  {{ item.price }}
+                  {{ herr.price }}
                   {% endif %}
                 </strong>
               </h4>
@@ -119,43 +119,22 @@
     <!--Section: Products v.3-->
 
     <!--Pagination-->
-    {% if is_paginated %}
     <nav class="d-flex justify-content-center wow fadeIn">
       <ul class="pagination pg-blue">
 
         <!--Arrow left-->
-        {% if page_obj.has_previous %}
+        {% if herrts.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+          <a class="page-link" href="?page={{ herrts.previous_page_number }}" aria-label="Previous">
             <span aria-hidden="true">&laquo;</span>
             <span class="sr-only">Previous</span>
           </a>
         </li>
         {% endif %}
 
-        {% comment %}
-        <li class="page-item active">
-          <a class="page-link" href="#">1
-            <span class="sr-only">(current)</span>
-          </a>
-        </li>
+        {% if herrts.has_next %}
         <li class="page-item">
-          <a class="page-link" href="#">2</a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" href="#">3</a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" href="#">4</a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" href="#">5</a>
-        </li>
-        {% endcomment %}
-
-        {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+          <a class="page-link" href="?page={{ herrts.next_page_number }}" aria-label="Next">
             <span aria-hidden="true">&raquo;</span>
             <span class="sr-only">Next</span>
           </a>
@@ -163,7 +142,6 @@
         {% endif %}
       </ul>
     </nav>
-    {% endif %}
     <!--Pagination-->
 
   </div>
