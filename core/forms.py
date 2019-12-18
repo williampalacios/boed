@@ -58,9 +58,11 @@ class AddressForm(forms.Form):
             'id': "address-2",
             'class': "form-control"
         }),
-                                        required=True)
+                                        required=True,
+                                        initial='CDMX',
+                                        disabled=True)
     shipping_country = CountryField(blank_label='Seleccione País').formfield(
-        required=True)
+        required=True, initial='MX', disabled=True)
     shipping_zip = forms.CharField(widget=forms.TextInput(
         attrs={
             'placeholder': '09310',
