@@ -70,6 +70,16 @@ def HomeViewRef(request):
     return render(request, 'home-page-catref.html', {'herrts': herrts})
 
 
+def HomeViewAcc(request):
+    qs = Item.objects.exclude(stock=0)
+    qs_herr = qs.filter(category='A')
+    paginator = Paginator(qs_herr, 8)
+
+    page = request.GET.get('page')
+    herrts = paginator.get_page(page)
+    return render(request, 'home-page-catacc.html', {'herrts': herrts})
+
+
 class OrderSummaryView(LoginRequiredMixin, View):
     def get(self, *args, **kwargs):
         try:

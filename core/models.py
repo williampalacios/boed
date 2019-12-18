@@ -4,7 +4,7 @@ from django.shortcuts import reverse, redirect
 from django_countries.fields import CountryField
 
 CATEGORY_CHOICES = (('H', 'Herramientas'), ('R', 'Refacciones'),
-                    ('B', 'Bicicletas'))
+                    ('B', 'Bicicletas'), ('A', 'Accesorios'))
 
 LABEL_CHOICES = (('P', 'primary'), ('S', 'secondary'), ('D', 'danger'))
 
