@@ -517,7 +517,7 @@ class CheckoutView(LoginRequiredMixin, View):
             shipping_zip = form.cleaned_data.get('shipping_zip')
             same_billing_address = form.cleaned_data.get(
                 'same_billing_address')
-            #save_information = form.cleaned_data.get('save_information')
+            fact = form.cleaned_data.get('fact')
             payment_option = form.cleaned_data.get('payment_option')
 
             #buscamos la direccion principal asociada al usurio que envía la orden
@@ -565,6 +565,9 @@ class CheckoutView(LoginRequiredMixin, View):
                                     address=address_sc)
             else:
                 order_qs.update(pay_method=payment_option)
+            if fact:
+                print("fact traceback")
+                order_qs.update(fact=True)
             if not payment_option == 'E':
                 return redirect('core:shipping-options')
             else:
@@ -573,7 +576,6 @@ class CheckoutView(LoginRequiredMixin, View):
                 if was_p:
                     qs.update(total=o.total - 50)
                 return redirect('core:order-detail')
-
             #print(form.cleaned_data)
             #print("the form is valid")
         else:

@@ -96,6 +96,7 @@ class Order(models.Model):
                                   blank=True)
     total = models.FloatField(default=0)
     same_billing_address = models.BooleanField(default=False)
+    fact = models.BooleanField(default=False)
     address = models.ForeignKey(Address,
                                 on_delete=models.SET_NULL,
                                 null=True,
