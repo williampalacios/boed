@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Item, Order, OrderItem, Address
+from .models import Item, Order, OrderItem, Address, Customer
 from .forms import CheckoutForm, AddressForm, ShippingOptionsForm
 from django.core.paginator import Paginator
 from django.conf import settings
@@ -140,32 +140,38 @@ class ShippingOptionsView(LoginRequiredMixin, View):
 
 class OrderDetailView(LoginRequiredMixin, View):
     def get(self, *args, **kwargs):
+        qs = Order.objects.filter(user=self.request.user, ordered=False)
         try:
-            qs = Order.objects.filter(user=self.request.user, ordered=False)
             o = qs[0]
-            name = self.request.user.first_name + " " + self.request.user.last_name
-            address_qs = Address.objects.filter(user=self.request.user,
-                                                main=True)
-            a = address_qs[0]
-            total = o.total * 100
-            key = settings.STRIPE_PUBLISHABLE_KEY
-            context = {
-                'order': o,
-                'name': name,
-                'address': a.street_address,
-                'total': total,
-                'key': key
-            }
-            return render(self.request, 'order-detail-page.html', context)
         except:
             messages.info(self.request, "No tienes pedidos activos")
             return redirect('/')
+        name = self.request.user.first_name + " " + self.request.user.last_name
+        address_qs = Address.objects.filter(user=self.request.user, main=True)
+        a = address_qs[0]
+        total = o.total * 100
+        key = settings.STRIPE_PUBLISHABLE_KEY
+        email = self.request.user.email
+        context = {
+            'order': o,
+            'name': name,
+            'address': a.street_address,
+            'total': total,
+            'key': key,
+            'email': email
+        }
+        return render(self.request, 'order-detail-page.html', context)
 
 
 def charge(request):
     qs = Order.objects.filter(user=request.user, ordered=False)
+    address_qs_m = Address.objects.filter(user=request.user, main=True)
+    address_qs_s = Address.objects.filter(user=request.user, main=False)
+
     try:
         o = qs[0]
+        am = address_qs_m[0]
+        ase = address_qs_s[0]
     except:
         messages.info(
             request,
@@ -192,14 +198,54 @@ def charge(request):
 
     amount = round(o.total) * 100
     if request.method == 'POST':
-        #TODO Revisar si el pago con stripe fue exitoso.
+        try:
+            cus_qs = Customer.objects.filter(user=request.user)
+            address_line1 = am.street_address + " " + am.city
+            shipping_line1 = ase.street_address + " " + ase.city
+
+            if cus_qs.exists():
+                cus_obj = cus_qs[0]
+            else:
+                cus_obj = Customer(user=request.user)
+                cus_obj.save()
+            cus_qs = Customer.objects.filter(user=request.user)
+
+            if cus_obj.stripe_id != None:
+                stripe.Customer.modify(
+                    cus_obj.stripe_id,
+                    source=request.POST['stripeToken'],
+                )
+                customer = stripe.Customer.retrieve(cus_obj.stripe_id)
+            else:
+                customer = stripe.Customer.create(
+                    name=request.user.first_name + " " +
+                    request.user.last_name,
+                    email=request.POST['stripeEmail'],
+                    address={
+                        'line1': address_line1,
+                    },
+                    shipping={
+                        'address': {
+                            'line1': shipping_line1,
+                        },
+                        'name':
+                        request.user.first_name + " " + request.user.last_name
+                    },
+                    source=request.POST['stripeToken'])
+                cus_qs.update(stripe_id=customer.id)
+        except:
+            messages.info(request,
+                          "Error al crear/modificar cliente en STRIPE")
+            return redirect('core:order-detail')
+        #Revisar si el pago con stripe fue exitoso.
         try:
             charge = stripe.Charge.create(
+                customer=customer.id,
                 amount=amount,
                 currency='mxn',
-                description='pago con stripe',
-                receipt_email=request.POST['stripeEmail'],
-                source=request.POST['stripeToken'])
+                description="pago con stripe | pedido: " + str(o.id),
+                receipt_email=request.POST['stripeEmail'])
+            #source=request.POST['stripeToken'])
             messages.info(request, "Pago exitoso")
         except stripe.error.CardError as e:
             messages.info(request, e.error.message)
@@ -241,87 +287,111 @@ def charge(request):
 
         context = {'email': request.user.email}
         return render(request, 'charge.html', context)
+    else:
+        messages.info(
+            request,
+            "Necesitamos algunos detalles para poder completar tu compra")
+        return redirect('core:checkout')
 
 
 class chargeCash(LoginRequiredMixin, View):
     def get(self, *args, **kwargs):
-        qs = Order.objects.filter(user=self.request.user, ordered=False)
-        try:
-            o = qs[0]
-        except:
-            messages.info(self.request, "No se pudo completar la compra")
-            return redirect('/')
+        referer = self.request.META.get('HTTP_REFERER')
+        ord_det = "order-detail"
 
-        #revisar si cada producto sigue disponible; en caso de que no, redireccionar a order-summary.
-        qs_order_item = OrderItem.objects.filter(order=o)
-        for E in qs_order_item:
-            if E.item.stock >= 0:
-                if E.item.stock >= E.quantity:
-                    pass
+        if referer != None:
+            if ord_det in referer:
+                qs = Order.objects.filter(user=self.request.user,
+                                          ordered=False)
+                try:
+                    o = qs[0]
+                except:
+                    messages.info(self.request,
+                                  "No se pudo completar la compra")
+                    return redirect('/')
+
+                #revisar si cada producto sigue disponible; en caso de que no, redireccionar a order-summary.
+                qs_order_item = OrderItem.objects.filter(order=o)
+                for E in qs_order_item:
+                    if E.item.stock >= 0:
+                        if E.item.stock >= E.quantity:
+                            pass
+                        else:
+                            msj = "Lo sentimos, por el momento solo tenemos " + str(
+                                E.item.stock
+                            ) + " " + str(
+                                E.item
+                            ) + " disponible(s), por favor actualice la cantidad o elimine el producto del carrito."
+                            messages.info(self.request, msj)
+                            return redirect('core:order-summary')
+
+                for E in qs_order_item:
+                    qs_item = Item.objects.filter(id=E.item.id)
+                    stock = qs_item[0].stock
+                    qs_item.update(stock=stock - E.quantity)
+                qs.update(ordered=True, ordered_date=timezone.now())
+
+                #Mailing
+                message = "¡Gracias por su compra!\nDetalles del pedido NUM. " + str(
+                    o.id) + "\n"
+                orderItem_qs = OrderItem.objects.filter(order=o)
+                prodStr = ""
+                for E in orderItem_qs:
+                    prodStr = prodStr + E.item.title + " | " + str(
+                        E.quantity) + " | $" + str(
+                            E.get_total_final_price()) + "\n"
+                message = message + prodStr
+                if o.shipping_option == 'P':
+                    message = message + "Costo de envío: $50\n"
+                message = message + "Total: $" + str(o.total)
+                if o.pay_method == 'E':
+                    message = message + "\nA pagar en efectivo."
                 else:
-                    msj = "Lo sentimos, por el momento solo tenemos " + str(
-                        E.item.stock
-                    ) + " " + str(
-                        E.item
-                    ) + " disponible(s), por favor actualice la cantidad o elimine el producto del carrito."
-                    messages.info(self.request, msj)
-                    return redirect('core:order-summary')
-
-        for E in qs_order_item:
-            qs_item = Item.objects.filter(id=E.item.id)
-            stock = qs_item[0].stock
-            qs_item.update(stock=stock - E.quantity)
-        qs.update(ordered=True, ordered_date=timezone.now())
-
-        #Mailing
-        message = "¡Gracias por su compra!\nDetalles del pedido NUM. " + str(
-            o.id) + "\n"
-        orderItem_qs = OrderItem.objects.filter(order=o)
-        prodStr = ""
-        for E in orderItem_qs:
-            prodStr = prodStr + E.item.title + " | " + str(
-                E.quantity) + " | $" + str(E.get_total_final_price()) + "\n"
-        message = message + prodStr
-        if o.shipping_option == 'P':
-            message = message + "Costo de envío: $50\n"
-        message = message + "Total: $" + str(o.total)
-        if o.pay_method == 'E':
-            message = message + "\nA pagar en efectivo."
-        else:
-            message = message + "\nA pagar por transferencia/depósito."
-        message = message + "\nMétodo de envío: "
-        if o.shipping_option == 'P':
-            message = message + "Paquetería, una vez validado el pago, se ennviará a: " + o.address.street_address
-            message = message + "\nDebe enviar un mensaje por WhatsApp con el COMPROBANTE DE PAGO y NUM. DE PEDIDO al 5526774403 EN UN PLAZO NO MAYOR A 24 HORAS despues de su compra."
-            message = message + "\n\nDatos para el depósito:\nCuenta de HSBC: 4213 1660 7646 5891\nTipo de cuenta: Débito\nConcepto de pago: bicicletasonce pedido " + str(
-                o.id)
-            message = message + "\nEn caso de NO ENVIAR SU COMPRABANTE en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
-            message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
-        else:
-            if o.pay_method == "E":
-                message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 Iztapalapa Ciudad de México C.P. 09310) Teléfono: 5526774403"
-                message = message + "\nPor favor le pedimos que confirme su pedido mandando un mensaje con su NUM. DE PEDIDO por WhatsApp al 5526774403."
-                message = message + "\nUna vez que confirme, el equipo de Bicicletas Once preparará sus productos para ser entregados."
-                message = message + "\nPuede recoger su pedido pasadas 24 horas de su confirmación por WhatsApp"
-                message = message + "\nEn caso de NO CONFIRMAR en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
-                message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
+                    message = message + "\nA pagar por transferencia/depósito."
+                message = message + "\nMétodo de envío: "
+                if o.shipping_option == 'P':
+                    message = message + "Paquetería, una vez validado el pago, se ennviará a: " + o.address.street_address
+                    message = message + "\nDebe enviar un mensaje por WhatsApp con el COMPROBANTE DE PAGO y NUM. DE PEDIDO al 5526774403 EN UN PLAZO NO MAYOR A 24 HORAS despues de su compra."
+                    message = message + "\n\nDatos para el depósito:\nCuenta de HSBC: 4213 1660 7646 5891\nTipo de cuenta: Débito\nConcepto de pago: bicicletasonce pedido " + str(
+                        o.id)
+                    message = message + "\nEn caso de NO ENVIAR SU COMPRABANTE en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
+                    message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
+                else:
+                    if o.pay_method == "E":
+                        message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 Iztapalapa Ciudad de México C.P. 09310) Teléfono: 5526774403"
+                        message = message + "\nPor favor le pedimos que confirme su pedido mandando un mensaje con su NUM. DE PEDIDO por WhatsApp al 5526774403."
+                        message = message + "\nUna vez que confirme, el equipo de Bicicletas Once preparará sus productos para ser entregados."
+                        message = message + "\nPuede recoger su pedido pasadas 24 horas de su confirmación por WhatsApp"
+                        message = message + "\nEn caso de NO CONFIRMAR en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
+                        message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
+                    else:
+                        message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 Iztapalapa Ciudad de México C.P. 09310) Teléfono: 5526774403"
+                        message = message + "\nDebe enviar un mensaje por WhatsApp con el COMPROBANTE DE PAGO y NUM. DE PEDIDO al 5526774403 EN UN PLAZO NO MAYOR A 24 HORAS despues de su compra."
+                        message = message + "\n\nDatos para el depósito:\nCuenta de HSBC: 4213 1660 7646 5891\nTipo de cuenta: Débito\nConcepto de pago: bicicletasonce pedido " + str(
+                            o.id)
+                        message = message + "\nPuede recoger su pedido pasadas 24 horas de haber enviado su comprabante"
+                        message = message + "\nEn caso de NO ENVIAR SU COMPRABANTE en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
+                        message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
+                send_mail(
+                    'Resumen de su compra en www.bicicletasonce.com.mx',
+                    message,
+                    settings.EMAIL_HOST_USER,
+                    [self.request.user.email],
+                    fail_silently=False,
+                )
+                context = {'email': self.request.user.email}
+                return render(self.request, "charge.html", context)
             else:
-                message = message + "Recolección en tienda " + "(11 de Agosto de 1859,109 Iztapalapa Ciudad de México C.P. 09310) Teléfono: 5526774403"
-                message = message + "\nDebe enviar un mensaje por WhatsApp con el COMPROBANTE DE PAGO y NUM. DE PEDIDO al 5526774403 EN UN PLAZO NO MAYOR A 24 HORAS despues de su compra."
-                message = message + "\n\nDatos para el depósito:\nCuenta de HSBC: 4213 1660 7646 5891\nTipo de cuenta: Débito\nConcepto de pago: bicicletasonce pedido " + str(
-                    o.id)
-                message = message + "\nPuede recoger su pedido pasadas 24 horas de haber enviado su comprabante"
-                message = message + "\nEn caso de NO ENVIAR SU COMPRABANTE en un plazo de 24 horas despues de recibido este correo, su pedido será cancelado."
-                message = message + "\n\n¡Es un placer atenderle!\nSoporte: " + settings.EMAIL_HOST_USER + ", 5526774403"
-        send_mail(
-            'Resumen de su compra en www.bicicletasonce.com.mx',
-            message,
-            settings.EMAIL_HOST_USER,
-            [self.request.user.email],
-            fail_silently=False,
-        )
-        context = {'email': self.request.user.email}
-        return render(self.request, "charge.html", context)
+                messages.info(
+                    self.request,
+                    "Necesitamos algunos detalles para poder completar tu compra"
+                )
+                return redirect('core:checkout')
+        else:
+            messages.info(
+                self.request,
+                "Necesitamos algunos detalles para poder completar tu compra")
+            return redirect('core:checkout')
 
 
 class AddressView(LoginRequiredMixin, View):

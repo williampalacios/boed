@@ -57,6 +57,12 @@ class Item(models.Model):
         return False
 
 
+class Customer(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL,
+                                on_delete=models.CASCADE)
+    stripe_id = models.CharField(max_length=100, blank=True, null=True)
+
+
 class Address(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)

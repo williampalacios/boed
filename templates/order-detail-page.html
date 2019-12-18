@@ -42,7 +42,7 @@
                         {% csrf_token %}
                         <script src="https://checkout.stripe.com/checkout.js" class="stripe-button" data-key="{{ key }}"
                             data-description="Cargo de la Compra" data-amount="{{ total }}" data-locale="auto"
-                            data-currency=mxn>
+                            data-currency=mxn data-email="{{ email }}" data-zip-code="true">
                             </script>
                         <script>
                             // Hide default stripe button, be careful there if you
