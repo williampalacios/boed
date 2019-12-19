@@ -18,17 +18,6 @@
 
         <!--Grid column-->
         <div class="col-md-8 mb-4">
-
-          {% comment %}
-          <div class="card">
-            <form class="card-body">
-              {% csrf_token %}
-              {{ form|crispy }}
-              <button class="btn btn-primary" tipy="submit">Enviar Orden</button>
-            </form>
-          </div>
-          {% endcomment %}
-
           <!--Card-->
           <div class="card">
 
@@ -36,82 +25,51 @@
             <form method="POST" class="card-body">
               {% csrf_token %}
 
-              <div class="h6 text-left">
-                Dirección de facturación:
-              </div>
-
-              <!--address-->
-              <div class="md-form mb-5">
-                {{ form.shipping_address }}
-                <label for="address" class="">Calle y Número</label>
-              </div>
-
-              <!--address-2-->
-              <div class="md-form mb-5">
-                {{ form.shipping_address2 }}
-                <label for="address-2" class="">Ciudad</label>
-              </div>
-
-              <div>
-                <small>
-                  <p class="font-weight-light">País:</p>
-                </small>
-              </div>
-
-              <div>
-                {{ form.shipping_country }}
-              </div>
-
-              <div class="my-5 md-form mb-5">
-                {{ form.shipping_zip }}
-                <label for="zip" class="">Código Postal</label>
-              </div>
-
-              <div class="mb-5">
-                {{ form.same_billing_address }}
-                <label>Usar esta dirección como dirección de envío</label><br>
+              <div class="custom-control custom-checkbox">
                 {{ form.fact }}
-                <label>Requiero factura</label>
+                <label class="custom-control-label" for="fact">Requiero factura</label>
               </div>
 
-              {% comment %}
-              <!--Grid row-->
-              <div class="row">
+              <fieldset id="fieldset">
 
-                <!--Grid column-->
-                <div class="col-lg-4 col-md-6 mb-4">
-
-                  <label for="state">State</label>
-                  <select class="custom-select d-block w-100" id="state" required>
-                    <option value="">Choose...</option>
-                    <option>California</option>
-                  </select>
-                  <div class="invalid-feedback">
-                    Please provide a valid state.
-                  </div>
-
+                <div class="h6 text-left">
+                  <br>Dirección de facturación:
                 </div>
-                <!--Grid column-->
 
-              </div>
-              <!--Grid row-->
-              {% endcomment %}
+                <!--address-->
+                <div class="md-form mb-5">
+                  {{ form.shipping_address }}
+                  <label for="address" class="">Calle y Número</label>
+                </div>
 
-              {% comment %}
-              <hr>
-              <div>
-                {{ form.same_billing_address }}
-                <label>Shipping address is the same as my billing address</label>
-              </div>
-              <div>
-                {{ form.save_information }}
-                <label>Save this information for next time</label>
-              </div>
-              <hr>
-              {% endcomment %}
+                <!--address-2-->
+                <div class="md-form mb-5">
+                  {{ form.shipping_address2 }}
+                  <label for="address-2" class="">Ciudad</label>
+                </div>
+
+                <div>
+                  <small>
+                    <p class="font-weight-light">País:</p>
+                  </small>
+                </div>
+                <div>
+                  {{ form.shipping_country }}
+                </div>
+
+                <div class="my-5 md-form mb-5">
+                  {{ form.shipping_zip }}
+                  <label for="zip" class="">Código Postal</label>
+                </div>
+
+                <div class="mb-5">
+                  {{ form.same_billing_address }}
+                  <label>Usar esta dirección como dirección de envío</label><br>
+                </div>
+              </fieldset>
 
               <div class="h6 text-left">
-                Tipo de pago:
+                <br>Tipo de pago:
               </div>
 
               <div class="d-block my-3">
@@ -124,41 +82,6 @@
                 {% endfor %}
               </div>
 
-              {% comment %}
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="cc-name">Name on card</label>
-                  <input type="text" class="form-control" id="cc-name" placeholder="" required>
-                  <small class="text-muted">Full name as displayed on card</small>
-                  <div class="invalid-feedback">
-                    Name on card is required
-                  </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="cc-number">Credit card number</label>
-                  <input type="text" class="form-control" id="cc-number" placeholder="" required>
-                  <div class="invalid-feedback">
-                    Credit card number is required
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-3 mb-3">
-                  <label for="cc-expiration">Expiration</label>
-                  <input type="text" class="form-control" id="cc-expiration" placeholder="" required>
-                  <div class="invalid-feedback">
-                    Expiration date required
-                  </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                  <label for="cc-expiration">CVV</label>
-                  <input type="text" class="form-control" id="cc-cvv" placeholder="" required>
-                  <div class="invalid-feedback">
-                    Security code required
-                  </div>
-                </div>
-              </div>
-              {% endcomment %}
               <hr class="mb-4">
               <button class="btn btn-primary btn-lg btn-block" type="submit">Continuar</button>
 

@@ -133,6 +133,7 @@ class ShippingOptionsView(LoginRequiredMixin, View):
                             qs.update(total=o.total + 50)
                         return redirect('core:address')
                     else:
+                        qs.update(address=None)
                         if was_p:
                             qs.update(total=o.total - 50)
                         return redirect('core:order-detail')
@@ -489,10 +490,11 @@ class CheckoutView(LoginRequiredMixin, View):
         address_qs = Address.objects.filter(user=self.request.user, main=True)
         if address_qs.exists():
             a = address_qs[0]
-            form.fields['shipping_address'].initial = a.street_address
-            form.fields['shipping_address2'].initial = a.city
-            form.fields['shipping_country'].initial = a.country
-            form.fields['shipping_zip'].initial = a.zip
+            if a.street_address != ".":
+                form.fields['shipping_address'].initial = a.street_address
+                form.fields['shipping_address2'].initial = a.city
+                form.fields['shipping_country'].initial = a.country
+                form.fields['shipping_zip'].initial = a.zip
         context = {'form': form}
         return render(self.request, "checkout-page.html", context)
 
@@ -525,10 +527,11 @@ class CheckoutView(LoginRequiredMixin, View):
                                                 main=True)
             #si existe (solo habrá uno debido "unique together") lo actualizamos
             if address_qs.exists():
-                address_qs.update(street_address=shipping_address,
-                                  city=shipping_address2,
-                                  country=shipping_country,
-                                  zip=shipping_zip)
+                if fact:
+                    address_qs.update(street_address=shipping_address,
+                                      city=shipping_address2,
+                                      country=shipping_country,
+                                      zip=shipping_zip)
             else:  #en otro caso, lo creamos...
                 address = Address(user=self.request.user,
                                   street_address=shipping_address,
@@ -551,8 +554,6 @@ class CheckoutView(LoginRequiredMixin, View):
                                          country=shipping_country,
                                          zip=shipping_zip)
                     address_sc = address_qs_sc[0]
-                    order_qs.update(pay_method=payment_option,
-                                    address=address_sc)
                 else:
                     address_sc = Address(user=self.request.user,
                                          street_address=shipping_address,
@@ -561,13 +562,16 @@ class CheckoutView(LoginRequiredMixin, View):
                                          zip=shipping_zip,
                                          main=False)
                     address_sc.save()
-                    order_qs.update(pay_method=payment_option,
-                                    address=address_sc)
+                order_qs.update(pay_method=payment_option,
+                                address=address_sc,
+                                same_billing_address=True)
             else:
-                order_qs.update(pay_method=payment_option)
+                order_qs.update(pay_method=payment_option,
+                                same_billing_address=False)
             if fact:
-                print("fact traceback")
                 order_qs.update(fact=True)
+            else:
+                order_qs.update(fact=False)
             if not payment_option == 'E':
                 return redirect('core:shipping-options')
             else:

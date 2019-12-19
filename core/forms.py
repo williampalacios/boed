@@ -36,7 +36,17 @@ class CheckoutForm(forms.Form):
         }),
                                    required=True)
     same_billing_address = forms.BooleanField(required=False)
-    fact = forms.BooleanField(required=False)
+    fact = forms.BooleanField(widget=forms.CheckboxInput(
+        attrs={
+            'name': "fact",
+            'value': "on",
+            'type': "checkbox",
+            'id': "fact",
+            'class': "custom-control-input",
+            'onclick': "showHideFact()",
+            'checked': "",
+        }),
+                              required=False)
     payment_option = forms.ChoiceField(widget=forms.RadioSelect,
                                        choices=PAY_CHOICES,
                                        required=True)
