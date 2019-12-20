@@ -179,8 +179,8 @@ class OrderDetailView(LoginRequiredMixin, View):
 
         shipping_address = o.address
         if shipping_address != None:
-            shipping_address = o.street_address + " " + o.city + " " + str(
-                o.country) + " " + o.zip
+            shipping_address = shipping_address.street_address + " " + shipping_address.city + " " + str(
+                shipping_address.country) + " " + shipping_address.zip
             context['shipping_address'] = shipping_address
 
         return render(self.request, 'order-detail-page.html', context)
