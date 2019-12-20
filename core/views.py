@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Item, Order, OrderItem, Address, Customer
+from .models import Item, Order, OrderItem, Address, Customer, Rfc
 from .forms import CheckoutForm, AddressForm, ShippingOptionsForm
 from django.core.paginator import Paginator
 from django.conf import settings
@@ -105,18 +105,24 @@ class ShippingOptionsView(LoginRequiredMixin, View):
         return render(self.request, "shipping-options.html", context)
 
     def post(self, *args, **kwargs):
+        qs = Order.objects.filter(user=self.request.user, ordered=False)
         try:
-            qs = Order.objects.filter(user=self.request.user, ordered=False)
             o = qs[0]  #aquí debe mandar la axcepción...
+        except:
+            messages.info(
+                self.request,
+                "imposible crear la orden... no tienes productos en tu carrito"
+            )
+            return redirect('/')
 
-            form = ShippingOptionsForm(self.request.POST or None)
-            if form.is_valid():
-                shipping_option = form.cleaned_data.get('shipping_option')
-
+        form = ShippingOptionsForm(self.request.POST or None)
+        if form.is_valid():
+            shipping_option = form.cleaned_data.get('shipping_option')
+            #si factura
+            if o.fact:
                 #buscamos la direccion de facturación asociada al usurio que envía la orden
                 address_qs = Address.objects.filter(user=self.request.user,
                                                     main=True)
-
                 #si no la tiene, lo mandamos a crear una...
                 if not address_qs.exists():
                     messages.info(
@@ -124,29 +130,22 @@ class ShippingOptionsView(LoginRequiredMixin, View):
                         "Aún no tenemos tu información de facturación, por favor llena el formulario"
                     )
                     return redirect('core:checkout')
-                else:  #actualizamos el método de envío en su orden
-                    o = qs[0]
-                    was_p = o.shipping_option == 'P'
-                    qs.update(shipping_option=shipping_option)
-                    if shipping_option == 'P':
-                        if not was_p:
-                            qs.update(total=o.total + 50)
-                        return redirect('core:address')
-                    else:
-                        qs.update(address=None)
-                        if was_p:
-                            qs.update(total=o.total - 50)
-                        return redirect('core:order-detail')
+            #actualizamos el método de envío en su orden
+            was_p = o.shipping_option == 'P'
+            qs.update(shipping_option=shipping_option)
+            if shipping_option == 'P':
+                if not was_p:
+                    qs.update(total=o.total + 50)
+                return redirect('core:address')
             else:
-                messages.warning(self.request,
-                                 "Falló el formulario shipping_options")
-                return redirect('core:shipping-options')
-        except:
-            messages.info(
-                self.request,
-                "imposible crear la orden... no tienes productos en tu carrito"
-            )
-            return redirect('/')
+                qs.update(address=None)
+                if was_p:
+                    qs.update(total=o.total - 50)
+                return redirect('core:order-detail')
+        else:
+            messages.warning(self.request,
+                             "Falló el formulario shipping_options")
+            return redirect('core:shipping-options')
 
 
 class OrderDetailView(LoginRequiredMixin, View):
@@ -157,20 +156,33 @@ class OrderDetailView(LoginRequiredMixin, View):
         except:
             messages.info(self.request, "No tienes pedidos activos")
             return redirect('/')
+
+        order_item_qs = OrderItem.objects.filter(order=o)
         name = self.request.user.first_name + " " + self.request.user.last_name
-        address_qs = Address.objects.filter(user=self.request.user, main=True)
-        a = address_qs[0]
         total = o.total * 100
         key = settings.STRIPE_PUBLISHABLE_KEY
         email = self.request.user.email
         context = {
             'order': o,
+            'order_item_qs': order_item_qs,
             'name': name,
-            'address': a.street_address,
             'total': total,
             'key': key,
             'email': email
         }
+        address_qs = Address.objects.filter(user=self.request.user, main=True)
+        if address_qs.exists():
+            a = address_qs[0]
+            context_a = a.street_address + " " + a.city + " " + str(
+                a.country) + " " + a.zip
+            context['address'] = context_a
+
+        shipping_address = o.address
+        if shipping_address != None:
+            shipping_address = o.street_address + " " + o.city + " " + str(
+                o.country) + " " + o.zip
+            context['shipping_address'] = shipping_address
+
         return render(self.request, 'order-detail-page.html', context)
 
 
@@ -487,6 +499,15 @@ class AddressView(LoginRequiredMixin, View):
 class CheckoutView(LoginRequiredMixin, View):
     def get(self, *args, **kwargs):
         form = CheckoutForm()
+
+        form.fields['first_name'].initial = self.request.user.first_name
+        form.fields['last_name'].initial = self.request.user.last_name
+
+        rfc_qs = Rfc.objects.filter(user=self.request.user)
+        if rfc_qs.exists():
+            r = rfc_qs[0]
+            form.fields['rfc'].initial = r.rfc
+
         address_qs = Address.objects.filter(user=self.request.user, main=True)
         if address_qs.exists():
             a = address_qs[0]
@@ -521,58 +542,75 @@ class CheckoutView(LoginRequiredMixin, View):
                 'same_billing_address')
             fact = form.cleaned_data.get('fact')
             payment_option = form.cleaned_data.get('payment_option')
+            first_name = form.cleaned_data.get('first_name')
+            last_name = form.cleaned_data.get('last_name')
+            rfc = form.cleaned_data.get('rfc')
 
-            #buscamos la direccion principal asociada al usurio que envía la orden
-            address_qs = Address.objects.filter(user=self.request.user,
-                                                main=True)
-            #si existe (solo habrá uno debido "unique together") lo actualizamos
-            if address_qs.exists():
-                if fact:
+            order_qs = Order.objects.filter(user=self.request.user,
+                                            ordered=False)
+            if fact:
+                #buscamos la direccion principal asociada al usurio que envía la orden
+                address_qs = Address.objects.filter(user=self.request.user,
+                                                    main=True)
+                #si existe (solo habrá uno debido "unique together") lo actualizamos
+                if address_qs.exists():
                     address_qs.update(street_address=shipping_address,
                                       city=shipping_address2,
                                       country=shipping_country,
                                       zip=shipping_zip)
-            else:  #en otro caso, lo creamos...
-                address = Address(user=self.request.user,
-                                  street_address=shipping_address,
-                                  city=shipping_address2,
-                                  country=shipping_country,
-                                  zip=shipping_zip,
-                                  main=True)
-                address.save()
+                else:  #en otro caso, lo creamos...
+                    address = Address(user=self.request.user,
+                                      street_address=shipping_address,
+                                      city=shipping_address2,
+                                      country=shipping_country,
+                                      zip=shipping_zip,
+                                      main=True)
+                    address.save()
 
-            order_qs = Order.objects.filter(user=self.request.user,
-                                            ordered=False)
-            if same_billing_address:
-                #buscamos la direccion de envío asociada al usurio que envía la orden
-                address_qs_sc = Address.objects.filter(user=self.request.user,
-                                                       main=False)
-                #si existe (solo habrá uno debido "unique together"), lo actualizamos
-                if address_qs_sc.exists():
-                    address_qs_sc.update(street_address=shipping_address,
-                                         city=shipping_address2,
-                                         country=shipping_country,
-                                         zip=shipping_zip)
-                    address_sc = address_qs_sc[0]
+                if same_billing_address:
+                    #buscamos la direccion de envío asociada al usurio que envía la orden
+                    address_qs_sc = Address.objects.filter(
+                        user=self.request.user, main=False)
+                    #si existe (solo habrá uno debido "unique together"), lo actualizamos
+                    if address_qs_sc.exists():
+                        address_qs_sc.update(street_address=shipping_address,
+                                             city=shipping_address2,
+                                             country=shipping_country,
+                                             zip=shipping_zip)
+                        address_sc = address_qs_sc[0]
+                    else:
+                        address_sc = Address(user=self.request.user,
+                                             street_address=shipping_address,
+                                             city=shipping_address2,
+                                             country=shipping_country,
+                                             zip=shipping_zip,
+                                             main=False)
+                        address_sc.save()
+                    order_qs.update(address=address_sc,
+                                    same_billing_address=True)
                 else:
-                    address_sc = Address(user=self.request.user,
-                                         street_address=shipping_address,
-                                         city=shipping_address2,
-                                         country=shipping_country,
-                                         zip=shipping_zip,
-                                         main=False)
-                    address_sc.save()
-                order_qs.update(pay_method=payment_option,
-                                address=address_sc,
-                                same_billing_address=True)
-            else:
-                order_qs.update(pay_method=payment_option,
-                                same_billing_address=False)
-            if fact:
+                    order_qs.update(same_billing_address=False)
+
+                rfc_qs = Rfc.objects.filter(user=self.request.user)
+                if rfc_qs.exists():
+                    u = rfc_qs[0].user
+                    u.first_name = first_name
+                    u.last_name = last_name
+                    u.save()
+                    rfc_qs.update(rfc=rfc)
+                else:
+                    rfc = Rfc(user=self.request.user, rfc=rfc)
+                    rfc.save()
+                    u = rfc.user
+                    u.first_name = first_name
+                    u.last_name = last_name
+                    u.save()
                 order_qs.update(fact=True)
             else:
                 order_qs.update(fact=False)
-            if not payment_option == 'E':
+            order_qs.update(pay_method=payment_option)
+
+            if payment_option != 'E':
                 return redirect('core:shipping-options')
             else:
                 was_p = o.shipping_option == 'P'
@@ -583,7 +621,9 @@ class CheckoutView(LoginRequiredMixin, View):
             #print(form.cleaned_data)
             #print("the form is valid")
         else:
-            messages.warning(self.request, "Falló el formulario checkout")
+            messages.warning(
+                self.request,
+                "Por favor ingrese todos sus datos de facturación")
             return redirect('core:checkout')
 
 

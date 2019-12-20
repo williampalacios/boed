@@ -16,7 +16,7 @@
                 <!-- Content -->
                 <div class="card-body">
                     <!-- Name -->
-                    <h4 class="card-title">Detalles de Pago</h4>
+                    <h4 class="card-title">Detalles de Pago:</h4>
                     <hr>
                     <div class="container">
                         <div class="row">
@@ -38,6 +38,83 @@
                         </div>
                         {% endif %}
                     </div>
+
+                    <br>
+                    <h4 class="card-title">Detalles del Pedido:</h4>
+                    <div class="container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td colspan="4"><b>Folio:</b></td>
+                                    <td><b>{{ order.id }}</b></td>
+                                </tr>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Producto</th>
+                                    <th scope="col">Precio</th>
+                                    <th scope="col">Cantidad</th>
+                                    <th scope="col">Sub Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for query_elmt in order_item_qs %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ query_elmt.item.title }}</td>
+                                    {% if query_elmt.item.discount_price %}
+                                    <td>{{ query_elmt.item.discount_price }}</td>
+                                    {% else %}
+                                    <td>{{ query_elmt.item.price }}</td>
+                                    {% endif %}
+                                    <td>
+                                        {{ query_elmt.quantity }}
+                                    </td>
+                                    <td>
+                                        {% if query_elmt.item.discount_price %}
+                                        ${{ query_elmt.get_total_discount_item_price }}
+                                        <span class="badge badge-danger">Ahorraste
+                                            ${{ query_elmt.get_amount_saved }}</span>
+                                        {% else %}
+                                        ${{ query_elmt.get_total_item_price }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if order.shipping_option == 'P' %}
+                                <tr>
+                                    <td></td>
+                                    <td colspan="3">Costo de envío</td>
+                                    <td>$50</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td colspan="4"><b>Gran Total</b></td>
+                                    <td><b>${{ order.total }}</b></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4 class="card-title">Detalles de Envío:</h4>
+                    <hr>
+                    <div class="container">
+                        {% if order.shipping_option == 'P' %}
+                        <div class="row">
+                            <div class="col">Método:</div>
+                            <div class="col">Paquetería</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Dirección de entrega:</div>
+                            <div class="col">{{ shipping_address }}</div>
+                        </div>
+                        {% else %}
+                        <div class="row">
+                            <div class="col">Método:</div>
+                            <div class="col">Recolección en tienda</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
                     <hr class="mb-4">
                     {% if order.pay_method == 'V' %}
                     <form action="{% url 'core:charge' %}" method="POST">

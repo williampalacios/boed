@@ -25,12 +25,45 @@
             <form method="POST" class="card-body">
               {% csrf_token %}
 
+              <div class="h6 text-left">
+                <br>Tipo de pago:
+              </div>
+
+              <div class="d-block my-3">
+                {% for v, n in form.fields.payment_option.choices %}
+                <div class="custom-control custom-radio">
+                  <input id="{{ n }}" name="payment_option" value="{{ v }}" type="radio" class="custom-control-input"
+                    checked required>
+                  <label class="custom-control-label" for="{{ n }}">{{ n }}</label>
+                </div>
+                {% endfor %}
+              </div>
+
               <div class="custom-control custom-checkbox">
                 {{ form.fact }}
                 <label class="custom-control-label" for="fact">Requiero factura</label>
               </div>
 
-              <fieldset id="fieldset">
+              <fieldset id="fieldset" style="display: none;">
+
+                <div class="h6 text-left">
+                  <br>Datos del cliente:
+                </div>
+
+                <div class="md-form mb-5">
+                  {{ form.first_name }}
+                  <label for="first_name" class="">Nombre(s)</label>
+                </div>
+
+                <div class="md-form mb-5">
+                  {{ form.last_name }}
+                  <label for="last_name" class="">Apellidos</label>
+                </div>
+
+                <div class="md-form mb-5">
+                  {{ form.rfc }}
+                  <label for="rfc" class="">RFC</label>
+                </div>
 
                 <div class="h6 text-left">
                   <br>Dirección de facturación:
@@ -67,20 +100,6 @@
                   <label>Usar esta dirección como dirección de envío</label><br>
                 </div>
               </fieldset>
-
-              <div class="h6 text-left">
-                <br>Tipo de pago:
-              </div>
-
-              <div class="d-block my-3">
-                {% for v, n in form.fields.payment_option.choices %}
-                <div class="custom-control custom-radio">
-                  <input id="{{ n }}" name="payment_option" value="{{ v }}" type="radio" class="custom-control-input"
-                    checked required>
-                  <label class="custom-control-label" for="{{ n }}">{{ n }}</label>
-                </div>
-                {% endfor %}
-              </div>
 
               <hr class="mb-4">
               <button class="btn btn-primary btn-lg btn-block" type="submit">Continuar</button>

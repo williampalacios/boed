@@ -19,18 +19,9 @@
     function showHideFact() {
         if (document.getElementById('fact').checked) {
             document.getElementById('fieldset').style.display = 'block';
-            document.getElementById('address').value = '';
-            document.getElementById('address-2').value = '';
-            document.getElementById('zip').value = '';
-            document.getElementById('id_shipping_country').value = 'MX';
         }
         else {
             document.getElementById('fieldset').style.display = 'none';
-            document.getElementById('address').value = '.';
-            document.getElementById('address-2').value = '.';
-            document.getElementById('zip').value = '.';
-            document.getElementById('id_shipping_country').value = 'MX';
-            document.getElementById('id_same_billing_address').removeAttribute('value');
         }
     }
 </script>
