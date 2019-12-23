@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import HomeView, CheckoutView, ItemDetailView, add_to_cart, remove_from_cart, OrderSummaryView, add_to_cart_os, remove_from_cart_os, delete_from_cart_os, HomeViewHerr, HomeViewBic, HomeViewRef, OrderDetailView, charge, AddressView, ShippingOptionsView, chargeCash, PrivacyView, HomeViewAcc
+from .views import HomeView, CheckoutView, ItemDetailView, add_to_cart, remove_from_cart, OrderSummaryView, add_to_cart_os, remove_from_cart_os, delete_from_cart_os, HomeViewHerr, HomeViewBic, HomeViewRef, OrderDetailView, charge, AddressView, ShippingOptionsView, chargeCash, PrivacyView, HomeViewAcc, ContactView
 
 app_name = 'core'
 
 urlpatterns = [
+    path('contact/', ContactView, name='contact'),
     path('', HomeView, name='home'),
     path('home-herr/', HomeViewHerr, name='home-herr'),
     path('home-bic/', HomeViewBic, name='home-bic'),

@@ -39,6 +39,10 @@ class HomeView(ListView):
 """
 
 
+def ContactView(request):
+    return render(request, 'contact.html')
+
+
 def HomeViewHerr(request):
     qs = Item.objects.exclude(stock=0)
     qs_herr = qs.filter(category='H')
