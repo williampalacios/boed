@@ -33,6 +33,10 @@
                         </div>
                         {% if order.fact %}
                         <div class="row">
+                            <div class="col">RFC:</div>
+                            <div class="col">{{ rfc.rfc }}</div>
+                        </div>
+                        <div class="row">
                             <div class="col">Dirección de facturación:</div>
                             <div class="col">{{ address }}</div>
                         </div>
@@ -51,6 +55,7 @@
                                 <tr>
                                     <th scope="col">#</th>
                                     <th scope="col">Producto</th>
+                                    <th scope="col"></th>
                                     <th scope="col">Precio</th>
                                     <th scope="col">Cantidad</th>
                                     <th scope="col">Sub Total</th>
@@ -61,6 +66,9 @@
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
                                     <td>{{ query_elmt.item.title }}</td>
+                                    <td><img src="{{ query_elmt.item.image.url }}" alt="thumbnail" class="img-thumbnail"
+                                            style="width: 70px">
+                                    </td>
                                     {% if query_elmt.item.discount_price %}
                                     <td>{{ query_elmt.item.discount_price }}</td>
                                     {% else %}
@@ -83,12 +91,12 @@
                                 {% if order.shipping_option == 'P' %}
                                 <tr>
                                     <td></td>
-                                    <td colspan="3">Costo de envío</td>
+                                    <td colspan="4">Costo de envío</td>
                                     <td>$50</td>
                                 </tr>
                                 {% endif %}
                                 <tr>
-                                    <td colspan="4"><b>Gran Total</b></td>
+                                    <td colspan="5"><b>Gran Total</b></td>
                                     <td><b>${{ order.total }}</b></td>
                                 </tr>
                             </tbody>

@@ -124,7 +124,7 @@ class Order(models.Model):
                 self.ordered)
 
     def get_absolute_url(self):
-        return reverse("core:order-detail", args=[str(self.id)])
+        return reverse("core:order", args=[str(self.id)])
 
 
 class OrderItem(models.Model):

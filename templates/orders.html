@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block head_title %}Bicicletas Once / Detalle del pedido{% endblock %}
+{% block content %}
+
+<body class="grey lighten-3">
+    <!--Main layout-->
+    <main>
+
+        <!-- Card -->
+        <div class="container wow fadeIn">
+            {% for order in orders_qs %}
+            <div class="card testimonial-card">
+
+                <!-- Background color -->
+                <div class=" card-up indigo lighten-1"></div>
+
+                <!-- Content -->
+                <div class="card-body">
+                    <!-- Name -->
+                    <h4 class="card-title">Pedido {{order.id}}</h4>
+                    <hr>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col">Fecha:</div>
+                            <div class="col">{{ order.ordered_date }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Total:</div>
+                            <div class="col">$ {{ order.total }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Método de Pago:</div>
+                            <div class="col">{{ order.get_pay_method_display }}{% if order.fact %} (factura) {% endif %}
+                            </div>
+                        </div>
+                        {% if order.fact %}
+                        <br>
+                        <div class="row">
+                            <div class="col"><b>Datos de Facturación:</b></div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Nombre:</div>
+                            <div class="col">{{ name }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">RFC:</div>
+                            <div class="col">{{ rfc.rfc }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Dirección de Facturación:</div>
+                            <div class="col">{{ address }}</div>
+                        </div>
+                        {% endif %}
+                        <br>
+                        <div class="row">
+                            <div class="col"><b>Detalles de Envío:</b></div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Método de Envío:</div>
+                            {% if order.shipping_option == 'P' %}
+                            <div class="col">Paquetería</div>
+                            {% else %}
+                            <div class="col">Recolección en tienda</div>
+                            {% endif %}
+                        </div>
+                        {% if order.shipping_option == 'P' %}
+                        <div class="row">
+                            <div class="col">Dirección de Envío:</div>
+                            <div class="col">{{ shipping_address }}</div>
+                        </div>
+                        {% endif %}
+                        <br>
+                        <div class="row">
+                            <div class="col"><b>Estado del Pedido:</b></div>
+                            <div class="col">
+                                Pagado
+                                {% if order.paid %}
+                                <i class="far fa-check-circle green-text"></i>
+                                {% else %}
+                                <i class="far fa-circle red-text"></i>
+                                {% endif %}
+                                {% if order.shipping_option == 'P' %}
+                                Enviado
+                                {% else %}
+                                Entregado
+                                {% endif %}
+                                {% if order.sent %}
+                                <i class="far fa-check-circle green-text"></i>
+                                {% else %}
+                                <i class="far fa-circle red-text"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row">
+                            <div class="col">
+                                <p>
+                                    <a href="{{ order.get_absolute_url }}"
+                                        class="btn btn-outline-info waves-effect btn-md btn-block">
+                                        Ver Productos
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card -->
+            </div>
+            <br>
+            {% endfor %}
+    </main>
+</body>
+{% endblock content %}

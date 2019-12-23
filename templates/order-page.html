@@ -3,13 +3,10 @@
 {% block head_title %}Bicicletas Once / Carrito{% endblock %}
 
 {% block content %}
-
-<!--Main layout-->
 <main>
     <div class="container">
 
         <div class="table-responsive text-nowrap">
-            <h2>Carrito de compra</h2>
             <table class="table">
                 <thead>
                     <tr>
@@ -18,11 +15,10 @@
                         <th scope="col"></th>
                         <th scope="col">Precio</th>
                         <th scope="col">Cantidad</th>
-                        <th scope="col">Sub Total</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for query_elmt in object %}
+                    {% for query_elmt in order_item_qs %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
                         <td>{{ query_elmt.item.title }}</td>
@@ -35,34 +31,24 @@
                         <td>{{ query_elmt.item.price }}</td>
                         {% endif %}
                         <td>
-                            <a href="{{ query_elmt.item.get_remove_from_cart_url_os }}">
-                                <i class="fas fa-minus mr-2"></i>
-                            </a>
                             {{ query_elmt.quantity }}
-                            <a href="{{ query_elmt.item.get_add_to_cart_url_os }}">
-                                <i class="fas fa-plus ml-2"></i>
-                            </a>
-                        </td>
-                        <td>
-                            {% if query_elmt.item.discount_price %}
-                            ${{ query_elmt.get_total_discount_item_price }}
-                            <span class="badge badge-danger">Ahorro ${{ query_elmt.get_amount_saved }}</span>
-                            {% else %}
-                            ${{ query_elmt.get_total_item_price }}
-                            {% endif %}
-                            <a href="{{ query_elmt.item.get_delete_from_cart_url_os }}"><i
-                                    class="fas fa-trash-alt float-right"></i></a>
                         </td>
                     </tr>
                     {% endfor %}
+                    {% if object.shipping_option == 'P' %}
                     <tr>
-                        <td colspan="5"><b>Gran Total</b></td>
-                        <td><b>${{ total }}</b></td>
+                        <td></td>
+                        <td colspan="3">Costo de envío</td>
+                        <td>$50</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td colspan="4"><b>Gran Total</b></td>
+                        <td><b>${{ object.total }}</b></td>
                     </tr>
                     <tr>
-                        <td colspan="6">
-                            <a class="btn btn-warning float-right ml-2" href="/checkout/">Proceder al Pago</a>
-                            <a class="btn btn-primary float-right" href="/">Continuar Comprando</a>
+                        <td colspan="5">
+                            <a class="btn btn-primary float-right" href="/orders/">Regresar</a>
                         </td>
                     </tr>
                 </tbody>
@@ -72,5 +58,4 @@
 
     </div>
 </main>
-<!--Main layout-->
 {% endblock content %}

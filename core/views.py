@@ -39,6 +39,57 @@ class HomeView(ListView):
 """
 
 
+class OrdersView(LoginRequiredMixin, View):
+    def get(self, *args, **kwargs):
+        try:
+            orders_qs = Order.objects.filter(user=self.request.user,
+                                             ordered=True)
+            o = orders_qs[0]
+            name = self.request.user.first_name + " " + self.request.user.last_name
+            email = self.request.user.email
+            context = {'orders_qs': orders_qs, 'name': name, 'email': email}
+
+            rfc_qs = Rfc.objects.filter(user=self.request.user)
+            if rfc_qs.exists():
+                rfc = rfc_qs[0]
+                context['rfc'] = rfc
+
+            address_qs = Address.objects.filter(user=self.request.user,
+                                                main=True)
+            if address_qs.exists():
+                a = address_qs[0]
+                context_a = a.street_address + " " + a.city + " " + str(
+                    a.country) + " " + a.zip
+                context['address'] = context_a
+
+            shipping_address = o.address
+            if shipping_address != None:
+                shipping_address = shipping_address.street_address + " " + shipping_address.city + " " + str(
+                    shipping_address.country) + " " + shipping_address.zip
+                context['shipping_address'] = shipping_address
+
+            return render(self.request, 'orders.html', context)
+
+        except:
+            messages.info(self.request, "Aún no tienes pedidos")
+            return redirect('/')
+
+
+class OrderView(LoginRequiredMixin, DetailView):
+    model = Order
+    template_name = "order-page.html"
+
+    def get_context_data(self, **kwargs):
+        if self.object.user == self.request.user:
+            order_item_qs = OrderItem.objects.filter(order=self.object)
+            context = super().get_context_data(**kwargs)
+            context['order_item_qs'] = order_item_qs
+        else:
+            context = {}
+            messages.warning(self.request, "Este pedido no te corresponde")
+        return context
+
+
 def ContactView(request):
     return render(request, 'contact.html')
 
@@ -186,6 +237,11 @@ class OrderDetailView(LoginRequiredMixin, View):
             shipping_address = shipping_address.street_address + " " + shipping_address.city + " " + str(
                 shipping_address.country) + " " + shipping_address.zip
             context['shipping_address'] = shipping_address
+
+        rfc_qs = Rfc.objects.filter(user=self.request.user)
+        if rfc_qs.exists():
+            rfc = rfc_qs[0]
+            context['rfc'] = rfc
 
         return render(self.request, 'order-detail-page.html', context)
 
