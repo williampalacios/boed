@@ -15,6 +15,7 @@
                         <th scope="col"></th>
                         <th scope="col">Precio</th>
                         <th scope="col">Cantidad</th>
+                        <th scope="col">Sub Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -22,8 +23,7 @@
                     <tr>
                         <td>{{ forloop.counter }}</td>
                         <td>{{ query_elmt.item.title }}</td>
-                        <td><img src="{{ query_elmt.item.image.url }}" alt="thumbnail" class="img-thumbnail"
-                                style="width: 70px">
+                        <td><img src="{{ query_elmt.item.image.url }}" style="width: 70px">
                         </td>
                         {% if query_elmt.item.discount_price %}
                         <td>{{ query_elmt.item.discount_price }}</td>
@@ -33,21 +33,30 @@
                         <td>
                             {{ query_elmt.quantity }}
                         </td>
+                        <td>
+                            {% if query_elmt.item.discount_price %}
+                            ${{ query_elmt.get_total_discount_item_price }}
+                            <span class="badge badge-danger">Ahorraste
+                                ${{ query_elmt.get_amount_saved }}</span>
+                            {% else %}
+                            ${{ query_elmt.get_total_item_price }}
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                     {% if object.shipping_option == 'P' %}
                     <tr>
                         <td></td>
-                        <td colspan="3">Costo de envío</td>
+                        <td colspan="4">Costo de envío</td>
                         <td>$50</td>
                     </tr>
                     {% endif %}
                     <tr>
-                        <td colspan="4"><b>Gran Total</b></td>
+                        <td colspan="5"><b>Gran Total</b></td>
                         <td><b>${{ object.total }}</b></td>
                     </tr>
                     <tr>
-                        <td colspan="5">
+                        <td colspan="6">
                             <a class="btn btn-primary float-right" href="/orders/">Regresar</a>
                         </td>
                     </tr>

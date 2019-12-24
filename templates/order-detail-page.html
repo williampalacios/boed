@@ -66,8 +66,7 @@
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
                                     <td>{{ query_elmt.item.title }}</td>
-                                    <td><img src="{{ query_elmt.item.image.url }}" alt="thumbnail" class="img-thumbnail"
-                                            style="width: 70px">
+                                    <td><img src="{{ query_elmt.item.image.url }}" style="width: 70px">
                                     </td>
                                     {% if query_elmt.item.discount_price %}
                                     <td>{{ query_elmt.item.discount_price }}</td>
