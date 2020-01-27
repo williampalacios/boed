@@ -11,6 +11,7 @@ from django.core.paginator import Paginator
 from django.conf import settings
 from django.core.mail import send_mail
 import stripe
+from django.contrib.auth.models import User
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -37,6 +38,43 @@ class HomeView(ListView):
     paginate_by = 8
     template_name = "home-page.html"
 """
+
+class OrdersViewStaff(LoginRequiredMixin, View):
+    def get(self, *args, **kwargs):
+        if self.request.user.is_staff:
+            orders_qs = Order.objects.all()
+            context = {'orders_qs': orders_qs}
+            return render(self.request, 'orders-staff.html', context)
+        else:
+            messages.info(self.request, "No estás autorizado!!!")
+            return redirect('/')
+
+
+class UserView(LoginRequiredMixin, DetailView):
+    model = User
+    template_name = "user.html"
+
+    def get_context_data(self, **kwargs):
+        if self.request.user.is_staff:
+            context = super().get_context_data(**kwargs)
+
+            rfc_qs = Rfc.objects.filter(user=self.object)
+            if rfc_qs.exists():
+                rfc = rfc_qs[0]
+                context['rfc'] = rfc
+
+            address_qs = Address.objects.filter(user=self.object,
+                                                main=True)
+            if address_qs.exists():
+                a = address_qs[0]
+                context_a = a.street_address + " " + a.city + " " + str(
+                    a.country) + " " + a.zip
+                context['address'] = context_a
+
+        else:
+            context = {}
+            messages.warning(self.request, "No tienes permitido acceder a este sitio")
+        return context
 
 
 class OrdersView(LoginRequiredMixin, View):
@@ -80,10 +118,12 @@ class OrderView(LoginRequiredMixin, DetailView):
     template_name = "order-page.html"
 
     def get_context_data(self, **kwargs):
-        if self.object.user == self.request.user:
+        if self.object.user == self.request.user or self.request.user.is_staff:
             order_item_qs = OrderItem.objects.filter(order=self.object)
+            referer = self.request.META.get('HTTP_REFERER')
             context = super().get_context_data(**kwargs)
             context['order_item_qs'] = order_item_qs
+            context['referer'] = referer
         else:
             context = {}
             messages.warning(self.request, "Este pedido no te corresponde")
@@ -103,7 +143,7 @@ def HomeViewHerr(request):
     page = request.GET.get('page')
     herrts = paginator.get_page(page)
     return render(request, 'home-page-cather.html', {'herrts': herrts})
-
+    
 
 def HomeViewBic(request):
     qs = Item.objects.exclude(stock=0)

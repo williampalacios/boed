@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block head_title %}Bicicletas Once / Cliente{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container">
+
+        <div class="table-responsive text-nowrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">E-mail</th>
+                        <th scope="col">Rfc</th>
+                        <th scope="col">Dirección de Facturación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ object.first_name }} {{ object.last_name }}</td>
+                        <td>{{ object.email }}</td>
+                        <td>{{ rfc }}</td>
+                        <td>{{ address }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="6">
+                            <a class="btn btn-primary float-right" href="/orders-staff/">Regresar</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</main>
+{% endblock content %}

@@ -126,6 +126,9 @@ class Order(models.Model):
     def get_absolute_url(self):
         return reverse("core:order", args=[str(self.id)])
 
+    def get_user_url(self):
+        return reverse("core:user", args=[self.user.id])
+
 
 class OrderItem(models.Model):
     item = models.ForeignKey(Item, on_delete=models.PROTECT)

@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import HomeView, CheckoutView, ItemDetailView, add_to_cart, remove_from_cart, OrderSummaryView, add_to_cart_os, remove_from_cart_os, delete_from_cart_os, HomeViewHerr, HomeViewBic, HomeViewRef, OrderDetailView, charge, AddressView, ShippingOptionsView, chargeCash, PrivacyView, HomeViewAcc, ContactView, OrdersView, OrderView
+from .views import HomeView, CheckoutView, ItemDetailView, add_to_cart, remove_from_cart, OrderSummaryView, add_to_cart_os, remove_from_cart_os, delete_from_cart_os, HomeViewHerr, HomeViewBic, HomeViewRef, OrderDetailView, charge, AddressView, ShippingOptionsView, chargeCash, PrivacyView, HomeViewAcc, ContactView, OrdersView, OrderView, OrdersViewStaff, UserView
 
 app_name = 'core'
 
 urlpatterns = [
+    path('orders-staff/', OrdersViewStaff.as_view(), name='orders-staff'),
     path('orders/', OrdersView.as_view(), name='orders'),
     path('contact/', ContactView, name='contact'),
     path('', HomeView, name='home'),
@@ -22,6 +23,7 @@ urlpatterns = [
     path('order-summary/', OrderSummaryView.as_view(), name='order-summary'),
     path('product/<pk>/', ItemDetailView.as_view(), name='product'),
     path('order/<pk>/', OrderView.as_view(), name='order'),
+    path('user/<pk>', UserView.as_view(), name='user'),
     path('order-detail/', OrderDetailView.as_view(), name='order-detail'),
     path('add-to-cart/<pk>/', add_to_cart, name='add-to-cart'),
     path('remove-from-cart/<pk>', remove_from_cart, name='remove-from-cart'),
