@@ -301,7 +301,7 @@ def charge(request):
         pass
     else:
         user = User.objects.filter(first_name="ejemplo")
-        address_qs_m = Address.objects.filter(user=user, main=False)
+        address_qs_s = Address.objects.filter(user=user, main=False)
 
     try:
         o = qs[0]
