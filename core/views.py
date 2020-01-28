@@ -291,6 +291,18 @@ def charge(request):
     address_qs_m = Address.objects.filter(user=request.user, main=True)
     address_qs_s = Address.objects.filter(user=request.user, main=False)
 
+    if address_qs_m.exists():
+        pass
+    else:
+        user = User.objects.filter(first_name="ejemplo")
+        address_qs_m = Address.objects.filter(user=user, main=True)
+
+    if address_qs_s.exists():
+        pass
+    else:
+        user = User.objects.filter(first_name="ejemplo")
+        address_qs_m = Address.objects.filter(user=user, main=False)
+
     try:
         o = qs[0]
         am = address_qs_m[0]
