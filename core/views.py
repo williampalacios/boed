@@ -294,13 +294,13 @@ def charge(request):
     if address_qs_m.exists():
         pass
     else:
-        user = User.objects.filter(first_name="ejemplo")
+        user = User.objects.get(first_name="ejemplo")
         address_qs_m = Address.objects.filter(user=user, main=True)
 
     if address_qs_s.exists():
         pass
     else:
-        user = User.objects.filter(first_name="ejemplo")
+        user = User.objects.get(first_name="ejemplo")
         address_qs_s = Address.objects.filter(user=user, main=False)
 
     try:
