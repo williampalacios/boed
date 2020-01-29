@@ -32,6 +32,38 @@ def HomeView(request):
     return render(request, 'home-page.html', {'herrts': herrts})
 
 
+def SearchView(request):
+    try:
+        q = request.GET.get('k')
+    except:
+        q = None
+    if q:
+        qr = Item.objects.exclude(stock=0)
+        qs = qr.filter(title__icontains=q)
+
+        if qs.exists():
+            paginator = Paginator(qs, 8)
+
+            page = request.GET.get('page')
+            herrts = paginator.get_page(page)
+            return render(request, 'home-page.html', {'herrts': herrts})
+        else:
+            qs = qr
+            paginator = Paginator(qs, 8)
+
+            page = request.GET.get('page')
+            herrts = paginator.get_page(page)
+            messages.info(request, "No existen coincidencias")
+            return render(request, 'home-page.html', {'herrts': herrts}) 
+    else:
+        qs = Item.objects.exclude(stock=0)
+        paginator = Paginator(qs, 8)
+
+        page = request.GET.get('page')
+        herrts = paginator.get_page(page)
+        return render(request, 'home-page.html', {'herrts': herrts})
+
+
 """
 class HomeView(ListView):
     model = Item
