@@ -12,13 +12,6 @@
             </strong>
         </a>
 
-        <form class="form-inline my-2 my-lg-0 ml-auto" role="search" action='/s/'>
-            <div class="form-group">
-                <input type="text" class="form-control" name="k" placeholder="Buscar">
-            </div>
-            <button class="btn btn-primary btn-md my-0 p" type="submit">Buscar</button>
-        </form>
-
         <!-- Collapse -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +36,12 @@
                     </a>
                 </li>
                 {% endcomment %}
+                <form class="form-inline my-2 my-lg-0 ml-auto" role="search" action='/s/'>
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="k" placeholder="Buscar">
+                        <button class="btn btn-primary btn-md my-0 p" type="submit">Buscar</button>
+                    </div>
+                </form>
                 {% if request.user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link waves-effect " href="{% url 'core:order-summary' %}">
