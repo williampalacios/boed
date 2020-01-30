@@ -11,16 +11,6 @@
                 <span class="sr-only">(current)</span>
             </strong>
         </a>
-        <form class="form-inline my-2 my-lg-0 ml-auto" role="search" action='/s/'>
-            <div class="d-flex flex-row">
-                <div>
-                    <input type="text" class="form-control" name="k" placeholder="Buscar">
-                </div>
-                <div>
-                    <button class="btn btn-primary btn-md my-0 p" type="submit">Buscar</button>
-                </div>
-            </div>
-        </form>
 
         <!-- Collapse -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
@@ -46,6 +36,16 @@
                     </a>
                 </li>
                 {% endcomment %}
+                <form class="form-inline my-2 my-lg-0 ml-auto" role="search" action='/s/'>
+                    <div class="d-flex flex-row">
+                        <div>
+                            <input type="text" class="form-control" name="k" placeholder="Buscar">
+                        </div>
+                        <div>
+                            <button class="btn btn-primary btn-md my-0 p" type="submit">Buscar</button>
+                        </div>
+                    </div>
+                </form>
                 {% if request.user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link waves-effect " href="{% url 'core:order-summary' %}">
