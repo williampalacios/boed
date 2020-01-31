@@ -30,13 +30,10 @@
 
             <div class="flex-fill">
                 {% if request.user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link waves-effect " href="{% url 'core:order-summary' %}">
-                        <span class="badge red z-depth-1 mr-1"> {{ request.user|cart_item_count }} </span>
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="sr-only">(current)</span>
-                    </a>
-                </li>
+                <a class="nav-link" href="{% url 'core:order-summary' %}">
+                    <span class="badge red z-depth-1 mr-1"> {{ request.user|cart_item_count }} </span>
+                    <i class="fas fa-shopping-cart"></i>
+                </a>
                 {% endif %}
             </div>
 
