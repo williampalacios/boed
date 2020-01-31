@@ -5,12 +5,42 @@
     <div class="container">
 
         <!-- Brand -->
+        <div class="d-flex flex-row">
 
-        <a class="navbar-brand waves-effect" href="/">
-            <strong class="blue-text">Bicicletas Once
-                <span class="sr-only">(current)</span>
-            </strong>
-        </a>
+            <div>
+                <a class="navbar-brand waves-effect" href="/">
+                    <strong class="blue-text">Bicicletas Once
+                        <span class="sr-only">(current)</span>
+                    </strong>
+                </a>
+            </div>
+
+            <div>
+                <form class="form-inline" role="search" action='/s/'>
+                    <div class="d-flex flex-row">
+                        <div>
+                            <input type="text" class="form-control" name="k" placeholder="Buscar">
+                        </div>
+                        <div>
+                            <button class="btn btn-primary btn-md my-0 p" type="submit">Buscar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div>
+                {% if request.user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link waves-effect " href="{% url 'core:order-summary' %}">
+                        <span class="badge red z-depth-1 mr-1"> {{ request.user|cart_item_count }} </span>
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="sr-only">(current)</span>
+                    </a>
+                </li>
+                {% endif %}
+            </div>
+
+        </div>
 
         <!-- Collapse -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
@@ -36,25 +66,9 @@
                     </a>
                 </li>
                 {% endcomment %}
-                <form class="form-inline" role="search" action='/s/'>
-                    <div class="d-flex flex-row">
-                        <div>
-                            <input type="text" class="form-control" name="k" placeholder="Buscar">
-                        </div>
-                        <div>
-                            <button class="btn btn-primary btn-md my-0 p" type="submit">Buscar</button>
-                        </div>
-                    </div>
-                </form>
-                {% if request.user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link waves-effect " href="{% url 'core:order-summary' %}">
-                        <span class="badge red z-depth-1 mr-1"> {{ request.user|cart_item_count }} </span>
-                        <i class="fas fa-shopping-cart"></i>Carrito
-                        <span class="sr-only">(current)</span>
-                    </a>
-                </li>
-                {% endif %}
+
+
+
                 {% if request.user.is_staff %}
                 <li class="nav-item">
                     <a class="nav-link waves-effect " href="/orders-staff/">
